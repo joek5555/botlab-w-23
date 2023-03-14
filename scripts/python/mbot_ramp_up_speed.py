@@ -17,7 +17,7 @@ time.sleep(1)
 
 
 for i in range (20):
-    command.trans_v = 0.001 * i
+    command.trans_v = 0.0001 * i
     command.angular_v = 0
     lc.publish("MBOT_MOTOR_COMMAND",command.encode())
     print( command.trans_v)
