@@ -361,7 +361,8 @@ private:
     bool assignNextTarget(void)
     {
         if(!targets_.empty()) { targets_.pop_back(); }
-        state_ = SMART; 
+        //state_ = SMART; 
+        state_ = INITIAL_TURN;
         return !targets_.empty();
     }
     
