@@ -14,7 +14,8 @@ enum message_topics{
     OMNI_MOTOR_COMMAND = 230, 
     MBOT_ENCODERS = 240, 
     OMNI_ENCODERS = 241, 
-    RESET_ENCODERS = 242
+    RESET_ENCODERS = 242,
+    MBOT_PIDS = 243
 };
 
 typedef struct serial_timestamp{
@@ -74,6 +75,33 @@ typedef struct __attribute__((__packed__ )) serial_mbot_omni_motor_command{
     float wz;
 } serial_mbot_omni_motor_command_t;
 
+typedef struct __attribute__((__packed__ )) serial_mbot_pid_gains{
+    float motor_a_kp;
+    float motor_a_ki;
+    float motor_a_kd;
+    float motor_a_Tf;
+
+    float motor_b_kp;
+    float motor_b_ki;
+    float motor_b_kd;
+    float motor_b_Tf;
+
+    float motor_c_kp;
+    float motor_c_ki;
+    float motor_c_kd;
+    float motor_c_Tf;
+
+    float bf_trans_kp;
+    float bf_trans_ki;
+    float bf_trans_kd;
+    float bf_trans_Tf;
+
+    float bf_rot_kp;
+    float bf_rot_ki;
+    float bf_rot_kd;
+    float bf_rot_Tf;
+} serial_mbot_pid_gains_t;
+
 int timestamp_t_deserialize(uint8_t* src, serial_timestamp_t* dest);
 int timestamp_t_serialize(serial_timestamp_t* src, uint8_t* dest);
 
@@ -94,5 +122,8 @@ int mbot_motor_command_t_serialize(serial_mbot_motor_command_t* src, uint8_t* de
 
 int mbot_omni_motor_command_t_deserialize(uint8_t* src, serial_mbot_omni_motor_command_t* dest);
 int mbot_omni_motor_command_t_serialize(serial_mbot_omni_motor_command_t* src, uint8_t* dest);
+
+int mbot_pid_gains_t_deserialize(uint8_t* src, serial_mbot_pid_gains_t* dest);
+int mbot_pid_gains_t_serialize(serial_mbot_pid_gains_t* src, uint8_t* dest);
 
 #endif

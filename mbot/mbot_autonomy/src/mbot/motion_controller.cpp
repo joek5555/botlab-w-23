@@ -21,6 +21,10 @@
 
 #include "maneuver_controller.h"
 
+# include <vector>
+#include <iostream>
+#include <fstream>
+
 /////////////////////// TODO: /////////////////////////////
 /**
  * Code below is a little more than a template. You will need
@@ -35,6 +39,9 @@
  *      to avoid commands to slow for your bots or ones too high
  */
 ///////////////////////////////////////////////////////////
+
+std::vector<mbot_lcm_msgs::pose_xyt_t> desired_pose_vector;
+std::vector<mbot_lcm_msgs::pose_xyt_t> odometry_vector;
 
 class StraightManeuverController : public ManeuverControllerBase
 {
@@ -227,6 +234,13 @@ public:
             bool is_last_target = targets_.size() == 1;
             mbot_lcm_msgs::pose_xyt_t pose = currentPose();
 
+            bool plot_data = true;
+            if(plot_data){
+                desired_pose_vector.push_back(target);
+                odometry_vector.push_back(pose);
+            }
+            
+
             if (state_ == SMART) 
             {
                 if (smart_controller.target_reached(pose, target, is_last_target))
@@ -326,6 +340,10 @@ public:
     void handlePose(const lcm::ReceiveBuffer* buf, const std::string& channel, const mbot_lcm_msgs::pose_xyt_t* pose)
     {
         computeOdometryOffset(*pose);
+    }
+
+    bool checkTargetsEmpty(){
+        return targets_.empty();
     }
     
 private:
@@ -427,6 +445,22 @@ int main(int argc, char** argv)
             // printf("%f\t%f\n", cmd.trans_v, cmd.angular_v);
             
             lcmInstance.publish(MBOT_MOTOR_COMMAND_CHANNEL, &cmd);
+            if(controller.checkTargetsEmpty() && !desired_pose_vector.empty() && !odometry_vector.empty()){
+                std::ofstream desired_pose_file;
+                desired_pose_file.open("desired_pose.txt");
+                for(int i = 0; i < desired_pose_vector.size(); i++){
+                    desired_pose_file << desired_pose_vector[i].x << " " << desired_pose_vector[i].y << " " << desired_pose_vector[i].theta << "\n";
+                }
+                desired_pose_file.close();
+
+                std::ofstream odometry_file;
+                odometry_file.open("odometry.txt");
+                for(int i = 0; i < odometry_vector.size(); i++){
+                    odometry_file << odometry_vector[i].x << " " << odometry_vector[i].y << " " << odometry_vector[i].theta << "\n";
+                }
+                odometry_file.close();
+
+            }
     	}
     }
     

@@ -19,6 +19,7 @@
 #include <mbot_lcm_msgs_timestamp_t.h>
 #include <mbot_lcm_msgs_omni_encoder_t.h>
 #include <mbot_lcm_msgs_reset_odometry_t.h>
+#include <mbot_lcm_msgs_mbot_pid_gains_t.h>
 
 #include <mbot_pico_shim/protocol.h>
 #include <mbot_pico_shim/topic_data.h>
@@ -105,6 +106,12 @@ static void reset_encoders_lcm_handler(const lcm_recv_buf_t* rbuf, const char* c
 #define MTR_CMD_LCM_SUB_FN      mbot_lcm_msgs_mbot_motor_command_t_subscribe
 #define RST_ENC_LCM_SUB_FN      mbot_lcm_msgs_mbot_encoder_t_subscribe
 
+#define PID_SEND_CHANNEL         MBOT_PIDS
+#define PID_SEND_SER_FN          mbot_pid_gains_t_serialize
+#define PID_SEND_DSR_FN          mbot_pid_gains_t_deserialize
+#define PID_SEND_LCM_SUB_FN      mbot_lcm_msgs_mbot_pid_gains_t_subscribe
+#define PID_SEND_TYPE_SER        serial_mbot_pid_gains_t
+
 #define ENCODER_SER_CHANNEL     MBOT_ENCODERS
 #define RST_ENC_SER_CHANNEL     RESET_ENCODERS
 #define ENCODER_SER_TYPE        serial_mbot_encoder_t
@@ -134,6 +141,31 @@ void serial_encoders_cb(serial_mbot_encoder_t* data)
     to_send.rightticks = data->rightticks;
     to_send.utime = data->utime;
     mbot_lcm_msgs_mbot_encoder_t_publish(lcmInstance, "MBOT_ENCODERS", &to_send);
+}
+
+void serial_pid_gains_cb(serial_mbot_pid_gains_t* data)
+{
+    mbot_lcm_msgs_mbot_pid_gains_t to_send = {0};
+    to_send.motor_a_kp = data->motor_a_kp;
+    to_send.motor_a_ki = data->motor_a_ki;
+    to_send.motor_a_kd = data->motor_a_kd;
+    to_send.motor_a_Tf = data->motor_a_Tf;
+
+    to_send.motor_c_kp = data->motor_c_kp;
+    to_send.motor_c_ki= data->motor_c_ki;
+    to_send.motor_c_kd = data->motor_c_kd;
+    to_send.motor_c_Tf = data->motor_c_Tf;
+
+    to_send.bf_trans_kp = data->bf_trans_kp;
+    to_send.bf_trans_ki = data->bf_trans_ki;
+    to_send.bf_trans_kd = data->bf_trans_kd;
+    to_send.bf_trans_Tf = data->bf_trans_Tf;
+
+    to_send.bf_rot_kp= data->bf_rot_kp;
+    to_send.bf_rot_ki = data->bf_rot_ki;
+    to_send.bf_rot_kd = data->bf_rot_kd;
+    to_send.bf_rot_Tf  = data->bf_rot_Tf ;
+    mbot_lcm_msgs_mbot_pid_gains_t_publish(lcmInstance, "MBOT_PIDS", &to_send);
 }
 
 static void reset_encoders_lcm_handler(const lcm_recv_buf_t* rbuf, const char* channel,
@@ -204,6 +236,9 @@ void register_topics()
     comms_register_topic(RST_ENC_SER_CHANNEL, sizeof(ENCODER_SER_TYPE), (Deserialize)&ENCODER_DSR_FN, (Serialize)&ENCODER_SER_FN, NULL);
     // motor commands topic (note the #define's to switch between omni and diff drive)
     comms_register_topic(MTR_CMD_CHANNEL, sizeof(MTR_CMD_TYPE_SER), (Deserialize)&MTR_CMD_DSR_FN, (Serialize)&MTR_CMD_SER_FN, NULL);
+
+    comms_register_topic(PID_SEND_CHANNEL, sizeof(PID_SEND_TYPE_SER), (Deserialize)&PID_SEND_DSR_FN, (Serialize)&PID_SEND_SER_FN, (MsgCb)serial_pid_gains_cb);
+    
 }
 
 void* handle_lcm(void* data)
@@ -244,6 +279,7 @@ void subscribe_lcm(lcm_t* lcm)
     mbot_lcm_msgs_reset_odometry_t_subscribe(lcm, "RESET_ODOMETRY", &reset_odom_lcm_handler, NULL);
     RST_ENC_LCM_SUB_FN(lcm, "RESET_ENCODERS", &reset_encoders_lcm_handler, NULL);
     MTR_CMD_LCM_SUB_FN(lcm, "MBOT_MOTOR_COMMAND", &motor_cmds_lcm_handler, NULL);
+    PID_SEND_LCM_SUB_FN(lcm, "MBOT_PIDS", &motor_cmds_lcm_handler, NULL);
 }
 
 int main(int argc, char** argv)
