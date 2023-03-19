@@ -4,6 +4,7 @@ sys.path.append("mbot_lcm_msgs")
 import lcm
 from mbot_lcm_msgs import mbot_motor_command_t
 from mbot_lcm_msgs import mbot_encoder_t
+from mbot_lcm_msgs import odometry_t
 import numpy as np
 import matplotlib.pyplot as plt
 import threading
@@ -17,6 +18,11 @@ WHEEL_RADIUS = 0.04
 ENCODER_RESOLUTION = 20
 GEAR_RATIO = 78.0
 
+old_x = []
+old_y = []
+old_theta = []
+old_time = []
+
 
 #left_target_velocity_arr = np.array([0])
 #right_target_velocity_arr = np.array([0])
@@ -28,14 +34,21 @@ right_target_velocity_arr = []
 left_velocity_arr = []
 right_velocity_arr = []
 
+forward_vel_odom = []
+forward_vel_set = []
+angular_vel_odom = []
+angular_vel_set =[]
+
 def start_lc_handle(lc, stop_thread_func):
+    event = threading.Event()
+    event.clear()
     while True:
         lc.handle()
         if stop_thread_func():
             print("Killing thread")
             break
 
-def my_handler(channel, data):
+def encoder_msg_handle(channel, data):
 
     msg = mbot_encoder_t.decode(data)
     left_target_velocity = (turn_vel*WHEEL_BASE - 2*fwd_vel)/(-2 * WHEEL_RADIUS)
@@ -49,14 +62,41 @@ def my_handler(channel, data):
     left_velocity_arr.append(left_velocity)
     right_velocity_arr.append(right_velocity)
 
+def odom_msg_handle(channel, data):
+
+    msg = odometry_t.decode(data)
+
+    if len(old_time) > 0:
+
+        forward_vel_odom.append((np.sqrt((msg.x - old_x[0])**2 + (msg.y - old_y[0])**2)) * 1000000/ (msg.utime - old_time[0]))
+        angular_vel_odom.append((msg.theta - old_theta[0]) * 1000000/ (msg.utime - old_time[0]))
+
+        forward_vel_set.append(fwd_vel)
+        angular_vel_set.append(turn_vel)
+        old_time[0] = msg.utime
+        old_x[0] = msg.x
+        old_y[0] = msg.y
+        old_theta[0] = msg.theta
+
+    else:
+        
+        old_time.append(msg.utime)
+        old_x.append(msg.x)
+        old_y.append(msg.y)
+        old_theta.append(msg.theta)
+    
+    
+
 
 
 stop_thread = False 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")
-subscription = lc.subscribe("MBOT_ENCODERS", my_handler)
+subscription = lc.subscribe("MBOT_ENCODERS", encoder_msg_handle)
+subscription = lc.subscribe("ODOMETRY", odom_msg_handle)
 time.sleep(0.1)
-lc_handle_thread = threading.Thread(target=start_lc_handle, args = (lc,lambda : stop_thread,))
-lc_handle_thread.start()
+lcm_thread = threading.Thread(target=start_lc_handle, args = (lc,lambda : stop_thread,))
+lcm_thread.start()
+
 
 
 fwd_vel = 0.25
@@ -178,3 +218,21 @@ ax1.legend(['right motor setpoint', 'right motor true value'])
 fig.savefig("right_motor_pid_square.png")
 plt.show()
 
+
+t = list(range(0, len(forward_vel_odom)))
+fig, ax = plt.subplots()
+ax.plot(t, forward_vel_set, t, forward_vel_odom)
+ax.legend(['desired vel', 'odometry'])
+ax.set(xlabel='time', ylabel='vel m/s',
+       title='forward_velocity error')
+fig.savefig("forward_vel_error.png")
+plt.show()
+
+t = list(range(0, len(angular_vel_odom)))
+fig, ax = plt.subplots()
+ax.plot(t, angular_vel_set, t, angular_vel_odom)
+ax.legend(['desired vel', 'odometry'])
+ax.set(xlabel='time', ylabel='vel rad/s',
+       title='angular_velocity error')
+fig.savefig("angular_vel_error.png")
+plt.show()
