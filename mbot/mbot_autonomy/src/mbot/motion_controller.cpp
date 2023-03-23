@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cassert>
 #include <signal.h>
+#include <unistd.h>
 
 #include <lcm/lcm-cpp.hpp>
 #include <mbot_lcm_msgs/omni_motor_command_t.hpp>
@@ -40,10 +41,10 @@ class StraightManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float fwd_pid[3] = {1.0, 0, 0};
+    float fwd_pid[3] = {0.8, 0, 0};
     float fwd_sum_error = 0;
     float fwd_last_error = 0;
-    float turn_pid[3] = {3.0, 0, 0};
+    float turn_pid[3] = {3.0, 0.1, 0.0};
     float turn_sum_error = 0;
     float turn_last_error = 0;
 public:
@@ -84,7 +85,7 @@ public:
 class TurnManeuverController : public ManeuverControllerBase
 {
 private:
-    float turn_pid[3] = {3.0, 0, 0};
+    float turn_pid[3] = {2.0, 0, 0};
     float turn_sum_error = 0;
     float turn_last_error = 0;
 public:
@@ -416,11 +417,11 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             // Fwd vel
-            if (cmd.trans_v > 0.8) cmd.trans_v = 0.8;
-            else if (cmd.trans_v < -0.8) cmd.trans_v = -0.8;
+            if (cmd.trans_v > 0.2) cmd.trans_v = 0.2;
+            else if (cmd.trans_v < -0.2) cmd.trans_v = -0.2;
 
             // Angular vel
-            float max_ang_vel = M_PI;
+            float max_ang_vel = M_PI/4;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 

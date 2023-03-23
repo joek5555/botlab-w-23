@@ -44,10 +44,6 @@ def my_handler(channel, data):
     y_odom.append(msg.y)
     theta_odom.append(msg.theta)
 
-
-
-
-
 stop_thread = False 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")
 subscription = lc.subscribe("ODOMETRY", my_handler)
@@ -56,78 +52,79 @@ lc_handle_thread = threading.Thread(target=start_lc_handle, args = (lc,lambda : 
 lc_handle_thread.start()
 
 
-fwd_vel = 0.25
-turn_vel = 0.0
-command = mbot_motor_command_t()
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(4.0)
+# fwd_vel = 0.25
+# turn_vel = 0.0
+# command = mbot_motor_command_t()
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(4.0)
 
-fwd_vel = 0.0
-turn_vel = 3.14
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(0.5)
+# fwd_vel = 0.0
+# turn_vel = 3.14
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(0.5)
 
-fwd_vel = 0.25
-turn_vel = 0.0
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(4.0)
+# fwd_vel = 0.25
+# turn_vel = 0.0
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(4.0)
 
-fwd_vel = 0.0
-turn_vel = 3.14
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(0.5)
+# fwd_vel = 0.0
+# turn_vel = 3.14
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(0.5)
 
-fwd_vel = 0.25
-turn_vel = 0.0
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(4.0)
+# fwd_vel = 0.25
+# turn_vel = 0.0
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(4.0)
 
-fwd_vel = 0.0
-turn_vel = 3.14
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(0.5)
+# fwd_vel = 0.0
+# turn_vel = 3.14
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(0.5)
 
-fwd_vel = 0.25
-turn_vel = 0.0
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(4.0)
+# fwd_vel = 0.25
+# turn_vel = 0.0
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(4.0)
 
-fwd_vel = 0.0
-turn_vel = 3.14
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(0.5)
+# fwd_vel = 0.0
+# turn_vel = 3.14
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(0.5)
 
-fwd_vel = 0.0
-turn_vel = 0.0
-command.trans_v = fwd_vel
-command.angular_v = turn_vel
-lc.publish("MBOT_MOTOR_COMMAND",command.encode())
-time.sleep(1.0)
+# fwd_vel = 0.0
+# turn_vel = 0.0
+# command.trans_v = fwd_vel
+# command.angular_v = turn_vel
+# lc.publish("MBOT_MOTOR_COMMAND",command.encode())
+# time.sleep(1.0)
 
+time.sleep(60.0)
 print("set kill thread to true")
 stop_thread = True
 #lc_handle_thread.join()
 time.sleep(1.0)
 # plot the data
 
-x_desired = [0, 0, -1, -1, 0]
-y_desired = [0, 1, 1, 0, 0]
+x_desired = [0, 0.61, 0.61, 1.22, 1.22, 1.83, 1.83, 2.44, 2.44, 3.05]
+y_desired = [0, 0, -0.61, -0.61, 0.61, 0.61, -0.61, -0.61, 0, 0]
 
 fig, ax = plt.subplots()
 ax.plot(x_desired, y_desired, x_odom, y_odom)
