@@ -51,6 +51,30 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     end_cell.y = static_cast<int>(f_end.y);
     std::vector<Point<int>> cells_touched;
     //////////////// TODO: Implement Bresenham's Algorithm ////////////////
+    float x0 = ray.origin.x;
+    float y0 = ray.origin.y;
+    float x1 = ray.range*cos(ray.theta);
+    float y1 = ray.range*sin(ray.theta);
+    float dx = abs(x1-x0);
+    float sx = x0<x1 ? 1 : -1;
+    float sy = y0<y1 ? 1 : -1;
+    float err = dx-dy;
+    float x = x0;
+    float y = y0;
+
+    while (x != x1 || y != y1){
+        map.setLogOdds(x,y,map.logOdds(x,y)-1);
+        float err2 = 2*err;
+        if (err2 >= -dy){
+            err -=dy;
+            x += sx;
+        }
+        if (err2 <= dx){
+            err += dx;
+            y += sy;
+        }
+        cells_touched.push_back(x,y)
+    }
     return cells_touched;
 }
 
