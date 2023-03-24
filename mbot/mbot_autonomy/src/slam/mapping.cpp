@@ -27,7 +27,14 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
         for(std::size_t j = 0; j < free_cells.size(); j++){
             cell_x = free_cells[j].x;
             cell_y = free_cells[j].y;
-            map.setLogOdds(cell_x, cell_y, map.logOdds(cell_x, cell_y) + missOdds); // no need to add prior because prior is 0
+
+            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) + missOdds;
+            if(cell_log_odds > 127)
+                cell_log_odds = 127;
+            else if(cell_log_odds < -127)
+                cell_log_odds = -127;
+            else
+                map.setLogOdds(cell_x, cell_y, cell_log_odds); // no need to add prior because prior is 0
         }
         if(current_ray.range < maxLaserDistance){ // if the range is less than the max range, then the endpoint is occupied
             Point<int> endpoint_cell = global_position_to_grid_cell(Point<double>(
@@ -36,7 +43,13 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
                 ), map);
             endcell_x = endpoint_cell.x;
             endcell_y = endpoint_cell.y;
-            map.setLogOdds(endcell_x, endcell_y, map.logOdds(endcell_x, endcell_y) + missOdds); // no need to add prior because prior is 0
+            int16_t cell_log_odds = map.logOdds(endcell_x, endcell_y) + hitOdds;
+            if(cell_log_odds > 127)
+                cell_log_odds = 127;
+            else if(cell_log_odds < -127)
+                cell_log_odds = -127;
+            else
+                map.setLogOdds(endcell_x, endcell_y, cell_log_odds); // no need to add prior because prior is 0
         }
     }
 
@@ -86,7 +99,7 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     float y = y0;
 
     while (x != x1 || y != y1){
-        //map.setLogOdds(x,y,map.logOdds(x,y)-1);
+        cells_touched.push_back(x,y)
         float err2 = 2*err;
         if (err2 >= -dy){
             err -=dy;
@@ -96,7 +109,7 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
             err += dx;
             y += sy;
         }
-        cells_touched.push_back(x,y)
+
     }
     return cells_touched;
 }
