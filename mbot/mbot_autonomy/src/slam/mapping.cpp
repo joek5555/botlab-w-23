@@ -21,14 +21,14 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
 
     MovingLaserScan moving_laser_scan(scan, previousPose_, pose, 1);
     for(std::size_t i = 0; i < moving_laser_scan.size(); i++){  // iterate through all the rays
-        const adjusted_ray_t& current_ray = moving_laser_scan[i]
+        const adjusted_ray_t& current_ray = moving_laser_scan[i];
 
         std::vector<Point<int>> free_cells = bresenham(current_ray, map);
         for(std::size_t j = 0; j < free_cells.size(); j++){
-            cell_x = free_cells[j].x;
-            cell_y = free_cells[j].y;
+            int cell_x = free_cells[j].x;
+            int cell_y = free_cells[j].y;
 
-            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) + missOdds;
+            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) + kMissOdds_;
             if(cell_log_odds > 127)
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
@@ -36,14 +36,14 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
             else
                 map.setLogOdds(cell_x, cell_y, cell_log_odds); // no need to add prior because prior is 0
         }
-        if(current_ray.range < maxLaserDistance){ // if the range is less than the max range, then the endpoint is occupied
+        if(current_ray.range < kMaxLaserDistance_){ // if the range is less than the max range, then the endpoint is occupied
             Point<int> endpoint_cell = global_position_to_grid_cell(Point<double>(
-                ray.origin.x + ray.range * std::cos(ray.theta),
-                ray.origin.y + ray.range * std::sin(ray.theta)
+                current_ray.origin.x + current_ray.range * std::cos(current_ray.theta),
+                current_ray.origin.y + current_ray.range * std::sin(current_ray.theta)
                 ), map);
-            endcell_x = endpoint_cell.x;
-            endcell_y = endpoint_cell.y;
-            int16_t cell_log_odds = map.logOdds(endcell_x, endcell_y) + hitOdds;
+            int endcell_x = endpoint_cell.x;
+            int endcell_y = endpoint_cell.y;
+            int16_t cell_log_odds = map.logOdds(endcell_x, endcell_y) + kHitOdds_;
             if(cell_log_odds > 127)
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
@@ -86,20 +86,23 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     end_cell.y = static_cast<int>(f_end.y);
     std::vector<Point<int>> cells_touched;
     //////////////// TODO: Implement Bresenham's Algorithm ////////////////
-    float x0 = ray.origin.x;
-    float y0 = ray.origin.y;
-    float x1 = ray.range*cos(ray.theta);
-    float y1 = ray.range*sin(ray.theta);
-    float dx = abs(x1-x0);
-    float dy = abs(y1-y0);
-    float sx = x0<x1 ? 1 : -1;
-    float sy = y0<y1 ? 1 : -1;
-    float err = dx-dy;
-    float x = x0;
-    float y = y0;
+    int x0 = ray.origin.x;
+    int y0 = ray.origin.y;
+    int x1 = ray.range*cos(ray.theta);
+    int y1 = ray.range*sin(ray.theta);
+    int dx = abs(x1-x0);
+    int dy = abs(y1-y0);
+    int sx = x0<x1 ? 1 : -1;
+    int sy = y0<y1 ? 1 : -1;
+    int err = dx-dy;
+    int x = x0;
+    int y = y0;
 
     while (x != x1 || y != y1){
-        cells_touched.push_back(x,y)
+        Point<int> cell;
+        cell.x = x;
+        cell.y = y;
+        cells_touched.push_back(cell);
         float err2 = 2*err;
         if (err2 >= -dy){
             err -=dy;
