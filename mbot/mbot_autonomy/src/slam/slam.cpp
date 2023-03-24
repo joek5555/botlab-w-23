@@ -31,7 +31,7 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , iters_(0)
 , filter_(numParticles)
 , map_(20.0f, 20.0f, 0.025f) // create a 20m x 20m grid with 0.025m cells
-, mapper_(5.0f, hitOddsIncrease, missOddsDecrease)
+, mapper_(5.0f, hitOddsIncrease, missOddsDecrease, initialPose)
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
 , randomInitialPos_(randomInitialPos)

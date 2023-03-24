@@ -4,10 +4,11 @@
 #include <chrono> 
 using namespace std::chrono; 
 
-Mapping::Mapping(float maxLaserDistance, int8_t hitOdds, int8_t missOdds)
+Mapping::Mapping(float maxLaserDistance, int8_t hitOdds, int8_t missOdds, mbot_lcm_msgs::pose_xyt_t previousPose)
 : kMaxLaserDistance_(maxLaserDistance)
 , kHitOdds_(hitOdds)
 , kMissOdds_(missOdds)
+, previousPose_(previousPose)
 , initialized_(false)
 {
 }
@@ -28,13 +29,13 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
             int cell_x = free_cells[j].x;
             int cell_y = free_cells[j].y;
 
-            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) + kMissOdds_;
+            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) - kMissOdds_;
             if(cell_log_odds > 127)
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
                 cell_log_odds = -127;
-            else
-                map.setLogOdds(cell_x, cell_y, cell_log_odds); // no need to add prior because prior is 0
+            map.setLogOdds(cell_x, cell_y, static_cast<int8_t>(cell_log_odds)); // no need to add prior because prior is 0
+            //printf("\nfree: %d", static_cast<int8_t>(cell_log_odds));
         }
         if(current_ray.range < kMaxLaserDistance_){ // if the range is less than the max range, then the endpoint is occupied
             Point<int> endpoint_cell = global_position_to_grid_cell(Point<double>(
@@ -48,10 +49,13 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
                 cell_log_odds = -127;
-            else
-                map.setLogOdds(endcell_x, endcell_y, cell_log_odds); // no need to add prior because prior is 0
+
+            map.setLogOdds(endcell_x, endcell_y, static_cast<int8_t>(cell_log_odds)); // no need to add prior because prior is 0
+            //printf("\noccupied: %d", static_cast<int8_t>(cell_log_odds));        
         }
     }
+
+    previousPose_ = pose;
 
 }
 

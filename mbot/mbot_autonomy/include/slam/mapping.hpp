@@ -22,8 +22,9 @@ public:
     * \param    maxLaserDistance    Maximum distance for the rays to be traced
     * \param    hitOdds             Increase in occupied odds for cells hit by a laser ray
     * \param    missOdds            Decrease in occupied odds for cells passed through by a laser ray
+    * \param    previousPose        the Previous pose, initially set to the current pose
     */
-    Mapping(float maxLaserDistance, int8_t hitOdds, int8_t missOdds);
+    Mapping(float maxLaserDistance, int8_t hitOdds, int8_t missOdds, mbot_lcm_msgs::pose_xyt_t previousPose);
     
     /**                                                                                     *
     * updateMap incorporates information from a new laser scan into an existing OccupancyGrid.
@@ -39,9 +40,10 @@ private:
     const float  kMaxLaserDistance_;
     const int8_t kHitOdds_;
     const int8_t kMissOdds_;
+    mbot_lcm_msgs::pose_xyt_t previousPose_;
     
     bool initialized_;
-    mbot_lcm_msgs::pose_xyt_t previousPose_;
+
     void scoreEndpoint(const adjusted_ray_t& ray, OccupancyGrid& map);
     void scoreRay(const adjusted_ray_t& ray, OccupancyGrid& map);
     std::vector<Point<int>> bresenham(const adjusted_ray_t& ray, const OccupancyGrid& map);
