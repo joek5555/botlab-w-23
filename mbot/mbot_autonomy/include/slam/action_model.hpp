@@ -63,9 +63,12 @@ private:
     double min_theta_;
 
     mbot_lcm_msgs::pose_xyt_t previousPose_;
+    double previous_theta_;
     double dx_;
     double dy_;
     double dtheta_;
+    double ds_;
+    double alpha;
     uint64_t utime_;
 
     bool initialized_;
@@ -75,6 +78,9 @@ private:
     float xStd_;
     float yStd_;
     float thetaStd_;
+    float turn1_std_;
+    float travel_std_;
+    float turn2_std_; 
 };
 
 #endif // SLAM_ACTION_MODEL_HPP
