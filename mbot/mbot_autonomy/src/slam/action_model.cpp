@@ -21,7 +21,6 @@ ActionModel::ActionModel(void)
 void ActionModel::resetPrevious(const mbot_lcm_msgs::pose_xyt_t& odometry)
 {
     previousPose_ = odometry;
-    previous_theta_ = previousPose_.theta;
 }
 
 
@@ -30,7 +29,7 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     ////////////// TODO: Implement code here to compute a new distribution of the motion of the robot ////////////////
     bool moved = 0;
 
-    if(odometry != previousPose_){
+    if(odometry.x != previousPose_.x || odometry.y != previousPose_.y || odometry.theta != previousPose_.theta){
         moved = 1;
         dx_ = odometry.x - previousPose_.x;
         dy_ = odometry.y - previousPose_.y;
@@ -38,11 +37,13 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
         ds_ = sqrt(dx_ * dx_ + dy_ * dy_);
         alpha = atan2(dy_, dx_) - previousPose_.theta;
 
+        // standard deviation is scaled based on distance traveled or angle turned
         turn1_std_ = k1_ * abs(alpha);
-        travel_std_ = k2 * abs(ds_);
-        turn2_std_ = k1 * abs(dtheta_ - alpha);
+        travel_std_ = k2_ * abs(ds_);
+        turn2_std_ = k1_ * abs(dtheta_ - alpha);
     }
 
+    // set previous pose to current pose
     previousPose_ = odometry;
 
     return moved;
@@ -55,17 +56,23 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     mbot_lcm_msgs::particle_t newSample = sample;
 
     std::random_device rd;
-    std::mt19937 gen(rd());
+    // create three different random numbers
+    std::mt19937 gen1(rd());
+    std::mt19937 gen2(rd());
+    std::mt19937 gen3(rd());
 
+    // create three normal distributions with zero mean and the standard deviations defined before
     std::normal_distribution<float> turn1_distribution(0, turn1_std_);
     std::normal_distribution<float> travel_distribution(0, travel_std_);
     std::normal_distribution<float> turn2_distribution(0, turn2_std_);
 
-    newSample.x += (ds_ + travel_distribution(gen)) * cos(previous_theta_ + alpha + turn1_distribution(gen));
-    newSample.y += (ds_ + travel_distribution(gen)) * sin(previous_theta_ + alpha + turn1_distribution(gen));
-    newSample.theta += dtheta_ + turn1_distribution(gen) + turn2_distribution(gen);
+    newSample.parent_pose = newSample.pose; 
 
-    previous_theta_ = previousPose_.theta;
+    newSample.pose.x += (ds_ + travel_distribution(gen2)) * cos(newSample.parent_pose.theta + alpha + turn1_distribution(gen1));
+    newSample.pose.y += (ds_ + travel_distribution(gen2)) * sin(newSample.parent_pose.theta + alpha + turn1_distribution(gen1));
+    newSample.pose.theta += dtheta_ + turn1_distribution(gen1) + turn2_distribution(gen3);
+
+    
 
     return newSample;
 }

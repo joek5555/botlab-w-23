@@ -63,7 +63,6 @@ private:
     double min_theta_;
 
     mbot_lcm_msgs::pose_xyt_t previousPose_;
-    double previous_theta_;
     double dx_;
     double dy_;
     double dtheta_;
