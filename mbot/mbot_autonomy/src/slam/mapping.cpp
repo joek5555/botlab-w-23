@@ -2,6 +2,7 @@
 #include <utils/grid_utils.hpp>
 #include <numeric>
 #include <chrono> 
+#include <iostream>
 using namespace std::chrono; 
 
 Mapping::Mapping(float maxLaserDistance, int8_t hitOdds, int8_t missOdds, mbot_lcm_msgs::pose_xyt_t previousPose)
@@ -29,13 +30,12 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
             int cell_x = free_cells[j].x;
             int cell_y = free_cells[j].y;
 
-            int16_t cell_log_odds = map.logOdds(cell_x, cell_y) - kMissOdds_;
+            int16_t cell_log_odds = static_cast<int16_t>(map.logOdds(cell_x, cell_y)) - static_cast<int16_t>(kMissOdds_);
             if(cell_log_odds > 127)
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
                 cell_log_odds = -127;
             map.setLogOdds(cell_x, cell_y, static_cast<int8_t>(cell_log_odds)); // no need to add prior because prior is 0
-            //printf("\nfree: %d", static_cast<int8_t>(cell_log_odds));
         }
         if(current_ray.range < kMaxLaserDistance_){ // if the range is less than the max range, then the endpoint is occupied
             Point<int> endpoint_cell = global_position_to_grid_cell(Point<double>(
@@ -44,18 +44,14 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
                 ), map);
             int endcell_x = endpoint_cell.x;
             int endcell_y = endpoint_cell.y;
-            int16_t cell_log_odds = map.logOdds(endcell_x, endcell_y) + kHitOdds_;
+            int16_t cell_log_odds = static_cast<int16_t>(map.logOdds(endcell_x, endcell_y)) + static_cast<int16_t>(kHitOdds_);
             if(cell_log_odds > 127)
                 cell_log_odds = 127;
             else if(cell_log_odds < -127)
                 cell_log_odds = -127;
-
             map.setLogOdds(endcell_x, endcell_y, static_cast<int8_t>(cell_log_odds)); // no need to add prior because prior is 0
-            //printf("\noccupied: %d", static_cast<int8_t>(cell_log_odds));        
         }
     }
-
-    previousPose_ = pose;
 
 }
 
@@ -90,10 +86,10 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     end_cell.y = static_cast<int>(f_end.y);
     std::vector<Point<int>> cells_touched;
     //////////////// TODO: Implement Bresenham's Algorithm ////////////////
-    int x0 = ray.origin.x;
-    int y0 = ray.origin.y;
-    int x1 = ray.range*cos(ray.theta);
-    int y1 = ray.range*sin(ray.theta);
+    int x0 = start_cell.x;
+    int y0 = start_cell.y;
+    int x1 = end_cell.x;
+    int y1 = end_cell.y;
     int dx = abs(x1-x0);
     int dy = abs(y1-y0);
     int sx = x0<x1 ? 1 : -1;
