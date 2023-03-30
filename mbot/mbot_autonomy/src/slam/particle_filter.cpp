@@ -89,21 +89,21 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
     //////////// TODO: Implement your algorithm for resampling from the posterior distribution ///////////////////
     ParticleList prior;
 
-    default_random_engine gen;
     double inverse_num_particles = 1/posterior_.size();
-    uniform_real_distribution<double> distribution(0.0, inverse_num_particles);
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> distribution(0.0, inverse_num_particles);
     double rand_number = distribution(gen); // random number between 0 and 1/ num_particles
 
     int posterior_particle_index = 0;
     double sum_particle_weights = posterior_[0].weight; // set the sum of particle weights to the first particle weight
     double step_size = 0;
-    for(int prior_particle_index = 0; prior_particle_index < posterior_.size(); i ++){
+    for(int prior_particle_index = 0; prior_particle_index < posterior_.size(); prior_particle_index ++){
         step_size = rand_number + prior_particle_index * inverse_num_particles; 
         while(step_size > sum_particle_weights){ // if the step size is greater than the sum of particle weights
                                                  // then we do not add the posterior particle index to the prior
                                                  // and we move on to the next posterior particle
             posterior_particle_index ++;
-            sum_particle_weights += posterior_[posterior_particle_index];
+            sum_particle_weights += posterior_[posterior_particle_index].weight;
         }
         prior[prior_particle_index] = posterior_[posterior_particle_index];
         prior[prior_particle_index].weight = inverse_num_particles;
