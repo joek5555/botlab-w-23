@@ -20,6 +20,16 @@ ParticleFilter::ParticleFilter(int numParticles)
 void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pose)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
+    posteriorPose_ = pose;
+
+    for (auto& particle : posterior_) {
+        particle.pose.x = posteriorPose_.x;
+        particle.pose.y = posteriorPose_.y;
+        particle.pose.theta = posteriorPose_.theta;
+        particle.pose.utime = pose.utime;
+        particle.parent_pose = particle.pose;
+        particle.weight = 1.0 / kNumParticles_;
+    }
 }
 
 void ParticleFilter::initializeFilterRandomly(const OccupancyGrid& map)
