@@ -77,9 +77,9 @@ private:
     float xStd_;
     float yStd_;
     float thetaStd_;
-    float turn1_std_;
-    float travel_std_;
-    float turn2_std_; 
+    float turn1_var_;
+    float travel_var_;
+    float turn2_var_; 
 };
 
 #endif // SLAM_ACTION_MODEL_HPP

@@ -49,7 +49,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
-    auto prior = resamplePosteriorDistribution(&map);
+    auto prior = resamplePosteriorDistribution(); // originally passed &map to function
     auto proposal = computeProposalDistribution(prior);
     posterior_ = computeNormalizedPosterior(proposal, laser, map);
     // OPTIONAL TODO: Add reinvigoration step
@@ -66,7 +66,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
     if(hasRobotMoved)
-    {
+    {    
         auto prior = resamplePosteriorDistribution();
         auto proposal = computeProposalDistribution(prior);
         posterior_ = proposal;
@@ -94,12 +94,12 @@ mbot_lcm_msgs::particles_t ParticleFilter::particles(void) const
 }
 
 
-ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* map)
+ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input to function was (const OccupancyGrid* map)
 {
     //////////// TODO: Implement your algorithm for resampling from the posterior distribution ///////////////////
     ParticleList prior;
 
-    double inverse_num_particles = 1/posterior_.size();
+    double inverse_num_particles = 1.0/(double)kNumParticles_;
     std::default_random_engine gen;
     std::uniform_real_distribution<double> distribution(0.0, inverse_num_particles);
     double rand_number = distribution(gen); // random number between 0 and 1/ num_particles
@@ -107,7 +107,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
     int posterior_particle_index = 0;
     double sum_particle_weights = posterior_[0].weight; // set the sum of particle weights to the first particle weight
     double step_size = 0;
-    for(int prior_particle_index = 0; prior_particle_index < posterior_.size(); prior_particle_index ++){
+    for(int prior_particle_index = 0; prior_particle_index < kNumParticles_; prior_particle_index ++){
         step_size = rand_number + prior_particle_index * inverse_num_particles; 
         while(step_size > sum_particle_weights){ // if the step size is greater than the sum of particle weights
                                                  // then we do not add the posterior particle index to the prior
@@ -115,8 +115,8 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
             posterior_particle_index ++;
             sum_particle_weights += posterior_[posterior_particle_index].weight;
         }
-        prior[prior_particle_index] = posterior_[posterior_particle_index];
-        prior[prior_particle_index].weight = inverse_num_particles;
+        prior.push_back(posterior_[posterior_particle_index]);
+        prior.back().weight = inverse_num_particles;
     }
 
     return prior;
@@ -128,7 +128,7 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
     //////////// TODO: Implement your algorithm for creating the proposal distribution by sampling from the ActionModel
     ParticleList proposal;
 
-    for(int i = 0; i < proposal.size(); i++){
+    for(int i = 0; i < prior.size(); i++){
         proposal.push_back(actionModel_.applyAction(prior[i]));
     }
 

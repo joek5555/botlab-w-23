@@ -9,7 +9,7 @@
 
 ActionModel::ActionModel(void)
 : k1_(0.01f)
-, k2_(0.01f)
+, k2_(0.4f)
 , min_dist_(0.0025)
 , min_theta_(0.02)
 , initialized_(false)
@@ -33,14 +33,15 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
         moved = 1;
         dx_ = odometry.x - previousPose_.x;
         dy_ = odometry.y - previousPose_.y;
-        dtheta_ = odometry.theta - previousPose_.theta;
+        dtheta_ = angle_diff(odometry.theta, previousPose_.theta);
         ds_ = sqrt(dx_ * dx_ + dy_ * dy_);
-        alpha = atan2(dy_, dx_) - previousPose_.theta;
+        alpha = angle_diff(atan2(dy_, dx_), previousPose_.theta);
 
         // standard deviation is scaled based on distance traveled or angle turned
-        turn1_std_ = k1_ * abs(alpha);
-        travel_std_ = k2_ * abs(ds_);
-        turn2_std_ = k1_ * abs(dtheta_ - alpha);
+
+        turn1_var_ = k1_ * abs(alpha);
+        travel_var_ = k2_ * abs(ds_);
+        turn2_var_ = k1_ * abs(angle_diff(dtheta_, alpha));
     }
 
     // set previous pose to current pose
@@ -62,15 +63,16 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     std::mt19937 gen3(rd());
 
     // create three normal distributions with zero mean and the standard deviations defined before
-    std::normal_distribution<float> turn1_distribution(0, turn1_std_);
-    std::normal_distribution<float> travel_distribution(0, travel_std_);
-    std::normal_distribution<float> turn2_distribution(0, turn2_std_);
+    std::normal_distribution<float> turn1_distribution(0, turn1_var_);
+    std::normal_distribution<float> travel_distribution(0, travel_var_);
+    std::normal_distribution<float> turn2_distribution(0, turn2_var_);
 
     newSample.parent_pose = newSample.pose; 
 
     newSample.pose.x += (ds_ + travel_distribution(gen2)) * cos(newSample.parent_pose.theta + alpha + turn1_distribution(gen1));
     newSample.pose.y += (ds_ + travel_distribution(gen2)) * sin(newSample.parent_pose.theta + alpha + turn1_distribution(gen1));
     newSample.pose.theta += dtheta_ + turn1_distribution(gen1) + turn2_distribution(gen3);
+    newSample.pose.theta = wrap_to_pi(newSample.pose.theta);
 
     
 

@@ -96,7 +96,7 @@ private:
 
     int kNumParticles_;         // Number of particles to use for estimating the pose
 
-    ParticleList resamplePosteriorDistribution(const OccupancyGrid* map = nullptr);
+    ParticleList resamplePosteriorDistribution(); // originally input was (const OccupancyGrid* map = nullptr)
     ParticleList computeProposalDistribution(const ParticleList& prior);
     ParticleList computeNormalizedPosterior(const ParticleList& proposal,
                                             const mbot_lcm_msgs::lidar_t& laser,
