@@ -143,6 +143,17 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     /////////// TODO: Implement your algorithm for computing the normalized posterior distribution using the
     ///////////       particles in the proposal distribution
     ParticleList posterior;
+    double sumWeights = 0.0;
+    for(auto& p : proposal){
+        particle_t weighted = p;
+        weighted.weight = sensorModel_.likelihood(weighted, laser, map);
+        sumWeights += weighted.weight;
+        posterior.push_back(weighted);
+    }
+
+    for(auto& p : posterior){
+        p.weight /= sumWeights;
+    }
     return posterior;
 }
 
@@ -151,6 +162,19 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
 {
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
+    double xAvg = 0.0;
+    double yAvg = 0.0;
+    double cosAvg = 0.0;
+    double sinAvg = 0.0;
+    for(auto& p: posterior){
+        xAvg += p.weight * p.pose.x;
+        yAvg += p.weight * p.pose.y;
+        cosAvg += p.weight * std::cos(p.pose.theta);
+        sinAvg += p.weight * std::sin(p.pose.theta);
+    }
+    pose.x = xAvg;
+    pose.y = yAvg;
+    pose.theta = std::atan2(sinAvg, cosAvg);
     return pose;
 }
 
