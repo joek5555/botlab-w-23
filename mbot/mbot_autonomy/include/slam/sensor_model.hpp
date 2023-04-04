@@ -58,6 +58,7 @@ public:
 private:
     const int ray_stride_;
     ///////// TODO: Add any private members for your SensorModel ///////////////////
+    float max_lidar_range = 5.0;
 };
 
 #endif // SLAM_SENSOR_MODEL_HPP

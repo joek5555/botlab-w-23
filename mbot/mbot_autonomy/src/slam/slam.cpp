@@ -35,8 +35,8 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
 , randomInitialPos_(randomInitialPos)
-, odomResetThreshDist_(0.05)
-, odomResetThreshAng_(0.08)  // ~5 degrees.
+, odomResetThreshDist_(0.05)  //was 0.05
+, odomResetThreshAng_(0.08)  // was 0.08 ~5 degrees.
 , mapFile_(mapFile)
 , initialPose_(initialPose)
 {
@@ -328,6 +328,7 @@ void OccupancyGridSLAM::updateLocalization(void)
 
 bool OccupancyGridSLAM::updateOdometry(const mbot_lcm_msgs::pose_xyt_t& odomPose, const mbot_lcm_msgs::pose_xyt_t& slamPose)
 {
+    return false;
     float dist = sqrt(pow(odomPose.x - slamPose.x, 2) + pow(odomPose.y - slamPose.y, 2));
     float theta = fabs(wrap_to_pi(odomPose.theta - slamPose.theta));
 
