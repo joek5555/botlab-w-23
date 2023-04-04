@@ -4,6 +4,10 @@
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <utils/grid_utils.hpp>
 #include <common_utils/geometric/point.hpp>
+
+#include <iostream>
+#include <fstream>
+
 SensorModel::SensorModel(void)
 :   ray_stride_(1)
 {
@@ -13,6 +17,7 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                                const mbot_lcm_msgs::lidar_t& scan, 
                                const OccupancyGrid& map)
 {
+    bool isThereAGoodScan = 0;
     double likelihood = 1.0;
     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
     int i = 0;
@@ -25,7 +30,12 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
             auto rayEndPt = global_position_to_grid_cell(endpt, map);
             if (map.logOdds(rayEndPt.x, rayEndPt.y) > 0.0){
                 likelihood += 100.0;
-                std::cout << i << " ray entered first if statement" << std::endl;
+                isThereAGoodScan = 1;
+                //std::ofstream myfile;
+                //myfile.open ("laser_scan_log.txt");
+                //myfile << i << " ray entered first if statement" << scan.utime << std::endl;
+                //myfile.close();
+                //std::cout << i << " ray entered first if statement" << std::endl;
             }
             else if (map.logOdds(rayEndPt.x+1, rayEndPt.y) > 0.0 ||
                      map.logOdds(rayEndPt.x+1, rayEndPt.y+1) > 0.0 || 
@@ -35,8 +45,13 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                      map.logOdds(rayEndPt.x-1, rayEndPt.y-1) > 0.0 ||
                      map.logOdds(rayEndPt.x, rayEndPt.y-1) > 0.0 ||
                      map.logOdds(rayEndPt.x+1, rayEndPt.y-1) > 0.0){
-                likelihood += 75.0;
-                std::cout << i << " ray entered second if statement" << std::endl;
+                likelihood += 50.0;
+                //isThereAGoodScan = 1;
+                //std::ofstream myfile;
+                //myfile.open ("laser_scan_log.txt");
+                //myfile << i << " ray entered second if statement at time" << scan.utime << std::endl;
+                //myfile.close();
+                //std::cout << i << " ray entered second if statement" << std::endl;
             }
             else if (map.logOdds(rayEndPt.x+2, rayEndPt.y) > 0.0 ||
                      map.logOdds(rayEndPt.x+2, rayEndPt.y+1) > 0.0 || 
@@ -54,11 +69,21 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                      map.logOdds(rayEndPt.x+1, rayEndPt.y-2) > 0.0 ||
                      map.logOdds(rayEndPt.x+2, rayEndPt.y-2) > 0.0 ||
                      map.logOdds(rayEndPt.x+2, rayEndPt.y-1) > 0.0){
-                likelihood += 50.0;
-                std::cout << i << " ray entered third if statement" << std::endl;
+                likelihood += 20.0;
+                //isThereAGoodScan = 1;
+                //std::ofstream myfile;
+                //myfile.open ("laser_scan_log.txt");
+                //myfile << i << " ray entered third if statement" << scan.utime << std::endl;
+                //myfile.close();
+                //std::cout << i << " ray entered third if statement" << std::endl;
             }
         }
     }
+    //if (isThereAGoodScan){
+        //isThereAGoodScan = 0;
+        //std::cout << "good laser scan at time " << scan.utime << std::endl;
+
+    //}
     // TODO
     return likelihood;
 } 

@@ -328,6 +328,7 @@ void OccupancyGridSLAM::updateLocalization(void)
 
 bool OccupancyGridSLAM::updateOdometry(const mbot_lcm_msgs::pose_xyt_t& odomPose, const mbot_lcm_msgs::pose_xyt_t& slamPose)
 {
+    return false;
     float dist = sqrt(pow(odomPose.x - slamPose.x, 2) + pow(odomPose.y - slamPose.y, 2));
     float theta = fabs(wrap_to_pi(odomPose.theta - slamPose.theta));
 
