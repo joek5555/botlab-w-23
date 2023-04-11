@@ -11,7 +11,23 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 {
     cell_t goalCell = global_position_to_grid_cell(Point<double>(goal.x, goal.y), distances);
      ////////////////// TODO: Implement your A* search here //////////////////////////
-    mbot_lcm_msgs::robot_path_t path;
+    Node.goal_cell;
+    g_cost = 500;
+    h_cost = 0;
+    Node* parent NULL;
+    Q.openList;
+    Q.push(start_node);
+    Node.goal_cell
+    std::vector<closed_list>;
+    while(openList == empty){
+        openList.pop(Node);
+        if(closed_list != Node){}
+            closed_list.push_back(Node);
+            if(Node != goal_cell){
+                expand_node(Node);
+            }
+    }
+
     return path;
 }
 
@@ -20,13 +36,16 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
 {
     // TODO: Return calculated h cost
-    double h_cost = 0;
+    // implementing 8-way heuristics
+    double dx = abs(node.x - goal.x);
+    double dy = abs(node.y - goal.y);
+    double h_cost = (dx+dy)+(1.414-2)*min(dx,dy);
     return h_cost;
 }
 double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return calculated g cost
-    double g_cost = 0;   
+    double g_cost = (start+node);   
     return g_cost;
 }
 

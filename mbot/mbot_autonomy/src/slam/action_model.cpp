@@ -28,12 +28,11 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 {
     ////////////// TODO: Implement code here to compute a new distribution of the motion of the robot ////////////////
     bool moved = 0;
-
-    if(odometry.x != previousPose_.x || odometry.y != previousPose_.y || odometry.theta != previousPose_.theta){
+    dx_ = odometry.x - previousPose_.x;
+    dy_ = odometry.y - previousPose_.y;
+    dtheta_ = angle_diff(odometry.theta, previousPose_.theta);
+    if(dx_ > 0.001 || dy_ > 0.001 || dtheta_ > 0.001){
         moved = 1;
-        dx_ = odometry.x - previousPose_.x;
-        dy_ = odometry.y - previousPose_.y;
-        dtheta_ = angle_diff(odometry.theta, previousPose_.theta);
         ds_ = sqrt(dx_ * dx_ + dy_ * dy_);
         alpha = angle_diff(atan2(dy_, dx_), previousPose_.theta);
 

@@ -16,7 +16,7 @@ struct DistanceNode
     bool operator<(const DistanceNode rhs) const
     {
         // Turns max heap into min heap
-        return distance > rhs.distance;
+        return rhs.distance < distance;
     }
 
     DistanceNode(cell_t cell, float distance)
