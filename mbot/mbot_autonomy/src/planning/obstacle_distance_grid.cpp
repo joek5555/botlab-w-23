@@ -13,6 +13,17 @@ ObstacleDistanceGrid::ObstacleDistanceGrid(void)
 void ObstacleDistanceGrid::initializeDistances(const OccupancyGrid& map)
 {
     //////////// TODO: initialize the dstances for the obstacle distance grid 
+    int width = map.widthInCells();
+    int height = map.heightInCells();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < height; x++) {
+            if (map.logOdds(x, y) < 0) {
+                distance(x, y) = -1;
+            } else {
+                distance(x, y) = 0;
+            }
+        }
+    }
     return;
 }
 
@@ -62,17 +73,31 @@ void ObstacleDistanceGrid::resetGrid(const OccupancyGrid& map)
     cells_.resize(width_ * height_);
 }
 
-void enqueue_obstacle_cells(const OccupancyGrid& map, 
+void ObstacleDistanceGrid::enqueue_obstacle_cells(const OccupancyGrid& map, 
                                 ObstacleDistanceGrid& grid, 
                                 std::priority_queue<DistanceNode>& search_queue)
 {
     ///////// TODO: Implement the method for enqueing neighboring cells
+    int height = map.heightInCells();
+    int width = map.widthInCells();
+    cell_t cell;
+    for (cell.y = 0; cell.y < height; cell.y++) {
+        for (cell.x = 0; cell.x < width; cell.x++) {
+            if (distance(cell.x, cell.y) == 0) {
+                expand_node(DistanceNode(cell, 0), grid, search_queue);
+            }
+        }
+    }
+
+
     return;
 }
 
 void expand_node(const DistanceNode& node, ObstacleDistanceGrid& grid, std::priority_queue<DistanceNode>& search_queue)
 {
     // TODO: Expand to neighboring nodes
+    const int xDeltas[8] = {1, 1,  1,   0, 0, -1, -1, -1};
+    const int yDeltas[8] = {0, 1, -1, -1,  1,  1, -1,  0};
 }
 
 bool is_cell_free(cell_t cell, const OccupancyGrid& map)

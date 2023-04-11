@@ -89,6 +89,10 @@ public:
     */
     float operator()(int x, int y) const { return cells_[cellIndex(x, y)]; }
     float& operator()(int x, int y) { return cells_[cellIndex(x, y)]; }
+
+    void ObstacleDistanceGrid::enqueue_obstacle_cells(const OccupancyGrid& map, 
+                                ObstacleDistanceGrid& grid, 
+                                std::priority_queue<DistanceNode>& search_queue);
     
 private:
     
@@ -111,10 +115,6 @@ private:
 
     void initializeDistances(const OccupancyGrid& map);
 };
-
-void enqueue_obstacle_cells(const OccupancyGrid& map, 
-                                ObstacleDistanceGrid& grid, 
-                                std::priority_queue<DistanceNode>& search_queue);
 
 void expand_node(const DistanceNode& node, ObstacleDistanceGrid& grid, std::priority_queue<DistanceNode>& search_queue);
 
