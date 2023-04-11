@@ -104,8 +104,9 @@ private:
     mbot_lcm_msgs::pose_xyt_t estimatePosteriorPose(const ParticleList& posterior);
     mbot_lcm_msgs::pose_xyt_t computeParticlesAverage(const ParticleList& particles_to_average);
 
-    double percent_of_top_particles = 0.02;
-    double covariance_of_sampled_particles = 1.0;
+    double percent_of_top_particles = 0.1;
+    double covariance_of_sampled_particles_xy = 0.2;
+    double covariance_of_sampled_particles_theta = 0.3; // 99 percent of particles are within 45 degrees left or right of best particle
 
     
     /**

@@ -57,7 +57,7 @@ public:
 private:
 
     ////////// TODO: Add or change private member variables needed for you implementation ///////////////////
-    /*
+    
     const float k1_;
     const float k2_;
 
@@ -74,9 +74,9 @@ private:
      double rot2Std_;
 
      std::mt19937 numberGenerator_;
-    */
-
     
+
+    /*
     //our code
     const float k1_;
     const float k2_;
@@ -101,6 +101,7 @@ private:
     float turn1_var_;
     float travel_var_;
     float turn2_var_; 
+    */
 
     
 };

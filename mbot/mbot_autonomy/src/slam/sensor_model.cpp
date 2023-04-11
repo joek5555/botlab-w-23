@@ -25,12 +25,14 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
         Point<double> endpoint(ray.origin.x + ray.range * std::cos(ray.theta),
                                 ray.origin.y + ray.range * std::sin(ray.theta));
         auto rayEnd = global_position_to_grid_cell(endpoint, map);
+        
         if(map.logOdds(rayEnd.x, rayEnd.y) > 0.0){
-            scanScore += 1.0;
+            scanScore += 100.0;
+            //scanScore += map.logOdds(rayEnd.x, rayEnd.y);
         }
 
     }
-
+    std::cout << scanScore << std::endl;
     return scanScore;
     /*
     //our code

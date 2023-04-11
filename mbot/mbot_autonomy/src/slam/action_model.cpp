@@ -10,8 +10,8 @@
 ActionModel::ActionModel(void)
 : k1_(0.015f) // 0.01
 , k2_(0.7f) // 0.4
-, min_dist_(0.0025)
-, min_theta_(0.02)
+//, min_dist_(0.0025)
+//, min_theta_(0.02)
 , initialized_(false)
 {
     //////////////// TODO: Handle any initialization for your ActionModel /////////////////////////
@@ -22,15 +22,15 @@ ActionModel::ActionModel(void)
 
 void ActionModel::resetPrevious(const mbot_lcm_msgs::pose_xyt_t& odometry)
 {
-    //previousOdometry_ = odometry;
-    previousPose_ = odometry;
+    previousOdometry_ = odometry;
+    //previousPose_ = odometry;
 }
 
 
 bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 {
     ////////////// TODO: Implement code here to compute a new distribution of the motion of the robot ////////////////
-/*
+
     if(!initialized_){
         previousOdometry_ = odometry;
         initialized_ = true;
@@ -63,8 +63,8 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     utime_ = odometry.utime;
 
     return moved_;
-    */
     
+    /*
     //our code
     bool moved = 0;
 
@@ -87,6 +87,7 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     previousPose_ = odometry;
 
     return moved;
+    */
     
 }
 
@@ -94,7 +95,7 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
 {
     ////////////// TODO: Implement your code for sampling new poses from the distribution computed in updateAction //////////////////////
     // Make sure you create a new valid particle_t. Don't forget to set the new time and new parent_pose.
-    /*
+    
     mbot_lcm_msgs::particle_t newSample = sample;
 
     float sampledRot1 = std::normal_distribution<>(rot1_, rot1Std_)(numberGenerator_);
@@ -108,9 +109,9 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     newSample.parent_pose = sample.pose;
 
     return newSample;
-    */
-
     
+
+    /*
     // our code
     mbot_lcm_msgs::particle_t newSample = sample;
 
@@ -135,5 +136,6 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     
 
     return newSample;
+    */
     
 }
