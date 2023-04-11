@@ -5,6 +5,7 @@
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <cassert>
 
+bool sortBtWeight (mbot_lcm_msgs::particle_t i, mbot_lcm_msgs::particle_t j) { return (i.weight>j.weight); }
 
 ParticleFilter::ParticleFilter(int numParticles)
 : kNumParticles_ (numParticles),
@@ -49,23 +50,30 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
-    auto prior = resamplePosteriorDistribution(); // originally passed &map to function
+    auto prior = posterior_;
     auto proposal = computeProposalDistribution(prior);
     posterior_ = computeNormalizedPosterior(proposal, laser, map);
+    
     // OPTIONAL TODO: Add reinvigoration step
-    posteriorPose_ = estimatePosteriorPose(posterior_);
+    //posteriorPose_ = estimatePosteriorPose(posterior_);
     posteriorPose_.utime = odometry.utime;
 
     //std::cout << "Number of particles: " << posterior_.size() << std::endl;
+    
+    std::sort (posterior_.begin(), posterior_.end(), sortBtWeight);
 
-    ParticleList posterior_top_particles = {posterior_.begin(), posterior_.end() - kNumParticles_/2};
+    int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
+
+    ParticleList posterior_top_particles = {posterior_.begin(), posterior_.begin() + num_top_particles};
 
     
     mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = computeParticlesAverage(posterior_top_particles);
-
-
-    //return posteriorPose_;
-    return average_pose_top_particles;
+    posteriorPose_ = average_pose_top_particles;
+    
+    //std::cout << average_pose_top_particles.x << ", " << average_pose_top_particles.y << ", " << average_pose_top_particles.theta << 
+    //    ", num_particles: " << posterior_top_particles.size() << std::endl;
+    posterior_ = resamplePosteriorDistribution(); // originally passed &map to function
+    return posteriorPose_;
 }
 
 mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_msgs::pose_xyt_t& odometry)
@@ -103,7 +111,7 @@ mbot_lcm_msgs::particles_t ParticleFilter::particles(void) const
 }
 
 
-bool sortBtWeight (mbot_lcm_msgs::particle_t i, mbot_lcm_msgs::particle_t j) { return (i.weight>j.weight); }
+
 
 
 ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input to function was (const OccupancyGrid* map)
@@ -151,29 +159,33 @@ ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input
         prior.push_back(posterior_[posterior_particle_index]);
         //prior.back().weight = inverse_num_particles;
     }
-
+    
     std::sort (prior.begin(), prior.end(), sortBtWeight);
+
+    int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
     
-    ParticleList prior_top_particles = {prior.begin(), prior.end() - kNumParticles_/2};
+    ParticleList prior_top_particles = {prior.begin(), prior.begin() + num_top_particles};
     
-    mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = estimatePosteriorPose(prior_top_particles);
+    mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = computeParticlesAverage(prior_top_particles);
 
     std::random_device rd;
     std::mt19937 generator(rd());
-    std::normal_distribution<> dist(0.0, 0.04);
+    std::normal_distribution<> dist(0.0, covariance_of_sampled_particles);
+    //dist(generator)
 
-    /*
-    for(int i = kNumParticles_/5 *4 ; i < prior.size(); i++){
-        prior[i].pose.x = average_pose_top_particles.x + dist(generator);
-        prior[i].pose.y = average_pose_top_particles.y + dist(generator);
-        prior[i].pose.theta = average_pose_top_particles.theta + dist(generator);
+    
+    for(int i = num_top_particles; i < prior.size(); i++){
+        prior[i].pose.x = average_pose_top_particles.x;
+        prior[i].pose.y = average_pose_top_particles.y;
+        prior[i].pose.theta = average_pose_top_particles.theta;
     }
-    */
+    
     for(int i = 0 ; i < prior.size(); i++){
         prior[i].weight = inverse_num_particles;
     }
     
-    std::cout << average_pose_top_particles.x << ", " << average_pose_top_particles.y << ", " << average_pose_top_particles.theta << std::endl;
+    //std::cout << average_pose_top_particles.x << ", " << average_pose_top_particles.y << ", " << average_pose_top_particles.theta << 
+        //", num_particles: " << prior_top_particles.size() << std::endl;
     return prior;
     
 }
@@ -200,12 +212,26 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     ///////////       particles in the proposal distribution
     ParticleList posterior;
     double sumWeights = 0.0;
+    std::cout << "//////////////   list of weights   /////////////////////" << std::endl;
     for(auto& p : proposal){
         mbot_lcm_msgs::particle_t weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
         sumWeights += weighted.weight;
         posterior.push_back(weighted);
     }
+
+    std::sort (posterior_.begin(), posterior_.end(), sortBtWeight);
+
+    std::cout << "top Weights" << std::endl;
+    for(int i = 0; i < posterior.size(); i++){
+        std::cout << posterior[i].weight << std::endl;
+    }
+    /*
+    std::cout << "lowest Weights" << std::endl;
+    for(int i = posterior.size() - 1; i > posterior.size() - 26; i--){
+        std::cout << posterior[i].weight << std::endl;
+    }
+    */
 
     for(auto& p : posterior){
         p.weight /= sumWeights;

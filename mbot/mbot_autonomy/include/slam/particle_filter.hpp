@@ -104,6 +104,9 @@ private:
     mbot_lcm_msgs::pose_xyt_t estimatePosteriorPose(const ParticleList& posterior);
     mbot_lcm_msgs::pose_xyt_t computeParticlesAverage(const ParticleList& particles_to_average);
 
+    double percent_of_top_particles = 0.02;
+    double covariance_of_sampled_particles = 1.0;
+
     
     /**
      * @brief Used to track averages for augmenting MCL sampling with a randomness.
