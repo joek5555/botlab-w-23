@@ -219,7 +219,7 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     ///////////       particles in the proposal distribution
     ParticleList posterior;
     double sumWeights = 0.0;
-    std::cout << "//////////////   list of weights   /////////////////////" << std::endl;
+    //std::cout << "//////////////   list of weights   /////////////////////" << std::endl;
     for(auto& p : proposal){
         mbot_lcm_msgs::particle_t weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
