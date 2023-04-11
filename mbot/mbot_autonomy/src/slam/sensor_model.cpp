@@ -17,7 +17,24 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                                const mbot_lcm_msgs::lidar_t& scan, 
                                const OccupancyGrid& map)
 {
-    int isThereAGoodScan = 0;
+
+    MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose);
+    double scanScore;
+
+    for(auto& ray : movingScan){
+        Point<double> endpoint(ray.origin.x + ray.range * std::cos(ray.theta),
+                                ray.origin.y + ray.range * std::sin(ray.theta));
+        auto rayEnd = global_position_to_grid_cell(endpoint, map);
+        if(map.logOdds(rayEnd.x, rayEnd.y) > 0.0){
+            scanScore += 1.0;
+        }
+
+    }
+
+    return scanScore;
+    /*
+    //our code
+    //int isThereAGoodScan = 0;
     double likelihood = 1.0;
     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
     int i = 0;
@@ -30,7 +47,7 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
             auto rayEndPt = global_position_to_grid_cell(endpt, map);
             likelihood += map.logOdds(rayEndPt.x, rayEndPt.y);
 
-            /*
+            
             if (map.logOdds(rayEndPt.x, rayEndPt.y) > 0.0){
                 //likelihood += 0.1; //100
                 
@@ -83,7 +100,7 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                 //myfile.close();
                 //std::cout << i << " ray entered third if statement" << std::endl;
             }
-            */
+            
         }
     }
     //if (isThereAGoodScan){
@@ -95,4 +112,6 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
 
     //std::cout << isThereAGoodScan << std::endl;
     return likelihood;
+
+    */
 } 

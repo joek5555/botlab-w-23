@@ -4,6 +4,7 @@
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <cassert>
+#include <common_utils/geometric/angle_functions.hpp>
 
 bool sortBtWeight (mbot_lcm_msgs::particle_t i, mbot_lcm_msgs::particle_t j) { return (i.weight>j.weight); }
 
@@ -26,10 +27,11 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
     for (auto& particle : posterior_) {
         particle.pose.x = posteriorPose_.x;
         particle.pose.y = posteriorPose_.y;
-        particle.pose.theta = posteriorPose_.theta;
+        particle.pose.theta = wrap_to_pi(posteriorPose_.theta);
         particle.pose.utime = pose.utime;
         particle.parent_pose = particle.pose;
         particle.weight = 1.0 / kNumParticles_;
+        
     }
 }
 
@@ -50,16 +52,18 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
-    auto prior = posterior_;
-    auto proposal = computeProposalDistribution(prior);
-    posterior_ = computeNormalizedPosterior(proposal, laser, map);
+    if(hasRobotMoved){
+        auto prior = resamplePosteriorDistribution(); // originally passed &map to function
+        auto proposal = computeProposalDistribution(prior);
+        posterior_ = computeNormalizedPosterior(proposal, laser, map);
+        // OPTIONAL TODO: Add reinvigoration step
+        posteriorPose_ = estimatePosteriorPose(posterior_);
+        //posteriorPose_.utime = odometry.utime;
+    }
     
-    // OPTIONAL TODO: Add reinvigoration step
-    //posteriorPose_ = estimatePosteriorPose(posterior_);
-    posteriorPose_.utime = odometry.utime;
 
     //std::cout << "Number of particles: " << posterior_.size() << std::endl;
-    
+    /*
     std::sort (posterior_.begin(), posterior_.end(), sortBtWeight);
 
     int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
@@ -69,10 +73,10 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
     
     mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = computeParticlesAverage(posterior_top_particles);
     posteriorPose_ = average_pose_top_particles;
-    
+    */
     //std::cout << average_pose_top_particles.x << ", " << average_pose_top_particles.y << ", " << average_pose_top_particles.theta << 
     //    ", num_particles: " << posterior_top_particles.size() << std::endl;
-    posterior_ = resamplePosteriorDistribution(); // originally passed &map to function
+
     return posteriorPose_;
 }
 
@@ -159,7 +163,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input
         prior.push_back(posterior_[posterior_particle_index]);
         //prior.back().weight = inverse_num_particles;
     }
-    
+    /*
     std::sort (prior.begin(), prior.end(), sortBtWeight);
 
     int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
@@ -178,7 +182,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input
         prior[i].pose.x = average_pose_top_particles.x;
         prior[i].pose.y = average_pose_top_particles.y;
         prior[i].pose.theta = average_pose_top_particles.theta;
-    }
+    }*/
     
     for(int i = 0 ; i < prior.size(); i++){
         prior[i].weight = inverse_num_particles;
@@ -212,20 +216,22 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     ///////////       particles in the proposal distribution
     ParticleList posterior;
     double sumWeights = 0.0;
-    std::cout << "//////////////   list of weights   /////////////////////" << std::endl;
+    //std::cout << "//////////////   list of weights   /////////////////////" << std::endl;
     for(auto& p : proposal){
         mbot_lcm_msgs::particle_t weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
         sumWeights += weighted.weight;
         posterior.push_back(weighted);
     }
-
+    /*
     std::sort (posterior_.begin(), posterior_.end(), sortBtWeight);
 
     std::cout << "top Weights" << std::endl;
     for(int i = 0; i < posterior.size(); i++){
         std::cout << posterior[i].weight << std::endl;
     }
+    */
+   
     /*
     std::cout << "lowest Weights" << std::endl;
     for(int i = posterior.size() - 1; i > posterior.size() - 26; i--){
