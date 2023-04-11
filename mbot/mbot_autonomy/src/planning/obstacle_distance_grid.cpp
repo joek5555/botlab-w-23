@@ -73,7 +73,7 @@ void ObstacleDistanceGrid::resetGrid(const OccupancyGrid& map)
     cells_.resize(width_ * height_);
 }
 
-void ObstacleDistanceGrid::enqueue_obstacle_cells(const OccupancyGrid& map, 
+void enqueue_obstacle_cells(const OccupancyGrid& map, 
                                 ObstacleDistanceGrid& grid, 
                                 std::priority_queue<DistanceNode>& search_queue)
 {
@@ -83,13 +83,11 @@ void ObstacleDistanceGrid::enqueue_obstacle_cells(const OccupancyGrid& map,
     cell_t cell;
     for (cell.y = 0; cell.y < height; cell.y++) {
         for (cell.x = 0; cell.x < width; cell.x++) {
-            if (distance(cell.x, cell.y) == 0) {
+            if (grid(cell.x, cell.y) == 0) {
                 expand_node(DistanceNode(cell, 0), grid, search_queue);
             }
         }
     }
-
-
     return;
 }
 
@@ -98,6 +96,16 @@ void expand_node(const DistanceNode& node, ObstacleDistanceGrid& grid, std::prio
     // TODO: Expand to neighboring nodes
     const int xDeltas[8] = {1, 1,  1,   0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1,  1,  1, -1,  0};
+    for (int i = 0; i < 8; i++) {
+        cell_t adjacentCell(node.cell.x + xDeltas[i], node.cell.y + yDeltas[i]);
+        if(grid.isCellInGrid(adjacentCell.x, adjacentCell.y)) {
+            if (grid(adjacentCell.x, adjacentCell.y) == -1) {
+                DistanceNode adjacentNode(adjacentCell, node.distance + 1);    //consider changing for diagonal cells to +1.4
+                grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
+                search_queue.push(adjacentNode);
+            }
+        }
+    }
 }
 
 bool is_cell_free(cell_t cell, const OccupancyGrid& map)
