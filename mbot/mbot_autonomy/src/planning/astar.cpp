@@ -28,35 +28,40 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 
     while (!queue.empty()) {
         
-        Node currNode = *queue.pop();
-        if(not_first_time)
-            std::cout<< "current node parent is x: " << currNode.parent->cell.x << ", y: " << currNode.parent->cell.y << std::endl;
-        not_first_time = 1;
-        if(currNode == goalNode) {
-            std::cout << "made it to goal" << std::endl;
-            std::vector<Node*>  node_path = extract_node_path(&currNode, &startNode);
-            std::cout << "1" << std::endl;
-            std::vector<mbot_lcm_msgs::pose_xyt_t> pose_path = extract_pose_path(node_path, distances);
-            std::cout << "2" << std::endl;
-            path.path = pose_path;
-            std::cout << "3" << std::endl;
-            path.path_length = path.path.size();
-            std::cout << "4" << std::endl;
-            path.utime = start.utime;
-            std::cout << "5" << std::endl;
-            break;
-        }
-        auto children = expand_node(&currNode, distances, params);
-        std::cout << "number of children: " << children.size() << std::endl;
-        for (int i = 0; i < children.size(); i++) {
-            if (visited.is_member(children[i]) == 0){
-                children[i]->h_cost = h_cost(children[i], &goalNode, distances);
-                std::cout << "calculate h" << std::endl;
-                children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
-                std::cout << "calculate g" << std::endl;
-                queue.push(children[i]);
-                std::cout << "queue push child parent x: " << children[i]->parent->cell.x << ", y: "<< children[i]->parent->cell.y << std::endl;
+        Node* currNode = queue.pop();
+        if(!visited.is_member(currNode)){
+            visited.push(currNode);
+        
+            if(not_first_time)
+                std::cout<< "current node x: "<< currNode->cell.x << ", y:" << currNode->cell.y << "parent is x: " << currNode->parent->cell.x << ", y: " << currNode->parent->cell.y << std::endl;
+            not_first_time = 1;
+            if(*currNode == goalNode) {
+                std::cout << "made it to goal" << std::endl;
+                std::vector<Node*>  node_path = extract_node_path(currNode, &startNode);
+                std::cout << "1" << std::endl;
+                std::vector<mbot_lcm_msgs::pose_xyt_t> pose_path = extract_pose_path(node_path, distances);
+                std::cout << "2" << std::endl;
+                path.path = pose_path;
+                std::cout << "3" << std::endl;
+                path.path_length = path.path.size();
+                std::cout << "4" << std::endl;
+                path.utime = start.utime;
+                std::cout << "5" << std::endl;
+                break;
             }
+            std::vector<Node*> children = expand_node(currNode, distances, params);
+            //std::cout << "number of children: " << children.size() << std::endl;
+            for (int i = 0; i < children.size(); i++) {
+                if (visited.is_member(children[i]) == 0){
+                    std::cout << "child cell x: " << children[i]->cell.x << ", y: " << children[i]->cell.y << ", parent x: " <<children[i]->parent->cell.x << ", y: " << children[i]->parent->cell.y   << std::endl;
+                    children[i]->h_cost = h_cost(children[i], &goalNode, distances);
+                    //std::cout << "calculate h" << std::endl;
+                    children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
+                    //std::cout << "calculate g" << std::endl;
+                    queue.push(children[i]);
+                    //std::cout << "queue push child parent x: " << children[i]->parent->cell.x << ", y: "<< children[i]->parent->cell.y << std::endl;
+                }
+            }   
         }
     }
     std::cout << "queue is empty" << std::endl;
@@ -79,38 +84,38 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
 {
     // TODO: Return calculated g cost
     double g_cost = from->parent->g_cost;
-    std::cout << "1" << std::endl;
+    //std::cout << "4child cell x: " << from->cell.x << ", y: " << from->cell.y << ", parent x: " <<from->parent->cell.x << ", y: " << from->parent->cell.y   << std::endl;
     if(abs(from->cell.x - from->parent->cell.x) == 0 || abs(from->cell.y - from->parent->cell.y) == 0){
         g_cost += 1.0;
-        std::cout << "2" << std::endl;
+        //std::cout << "2" << std::endl;
     }
     else{
         g_cost += 1.4;
-        std::cout << "3" << std::endl;
+        //std::cout << "3" << std::endl;
     }
     //if(distances(from->cell.x, from->cell.y) < params.maxDistanceWithCost){
     //    g_cost += pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
      //   std::cout << "2.3" << std::endl;
     //}
-    std::cout << "4" << std::endl;
+    //std::cout << "4" << std::endl;
     return g_cost;
 }
 
 std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return children of a given node that are not obstacles
-    std::cout << "expanding_node, x: " << node->cell.x << ", y: " << node->cell.y << std::endl;
+    //std::cout << "expanding_node, x: " << node->cell.x << ", y: " << node->cell.y << std::endl;
     std::vector<Node*> children;
     const int xDeltas[8] = {1, 1,  1,   0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1,  1,  1, -1,  0};
     for (int i = 0; i < 8; i++) {
         if (distances.isCellInGrid(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i])){
-            std::cout << "1" << std::endl;
             if(distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) > params.minDistanceToObstacle){
-                Node child(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
-                Node* child_pointer = &child;
-                child_pointer->parent = node;
-                children.push_back(child_pointer);
+                //Node child(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
+                Node* child = new Node(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
+                child->parent = node;
+                std::cout << "child cell x: " << child->cell.x << ", y: " << child->cell.y << ", parent x: " <<child->parent->cell.x << ", y: " << child->parent->cell.y   << std::endl;
+                children.push_back(child);
             }
         }
     }
@@ -123,7 +128,6 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
     std::vector<Node*> path;
     Node* currNode = goal_node;
     while((currNode == start_node) == 0) {
-        std::cout << "current node x: " << currNode->cell.x << ", y: " << currNode->cell.y << std::endl;
         path.insert(path.begin(), currNode);
         currNode = currNode->parent;
     }
