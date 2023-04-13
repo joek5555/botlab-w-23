@@ -100,9 +100,17 @@ void expand_node(const DistanceNode& node, ObstacleDistanceGrid& grid, std::prio
         cell_t adjacentCell(node.cell.x + xDeltas[i], node.cell.y + yDeltas[i]);
         if(grid.isCellInGrid(adjacentCell.x, adjacentCell.y)) {
             if (grid(adjacentCell.x, adjacentCell.y) == -1) {
-                DistanceNode adjacentNode(adjacentCell, node.distance + 1);    //consider changing for diagonal cells to +1.4
-                grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
-                search_queue.push(adjacentNode);
+                if( xDeltas[i] == 0 || yDeltas[i] == 0){ // if this cell is not diagonal
+                    DistanceNode adjacentNode(adjacentCell, node.distance + 1);
+                    grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
+                    search_queue.push(adjacentNode);
+                }
+                else{ // if this cell is diagonal
+                    DistanceNode adjacentNode(adjacentCell, node.distance + 1.4);
+                    grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
+                    search_queue.push(adjacentNode);
+                }
+                
             }
         }
     }

@@ -121,6 +121,8 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath);
 bool is_in_list(Node* node, std::vector<Node*> list);
 Node* get_from_list(Node* node, std::vector<Node*> list);
 
+float calculate_theta(mbot_lcm_msgs::pose_xyt_t pose1, mbot_lcm_msgs::pose_xyt_t pose2);
+
 
 /**
 * search_for_path uses an A* search to find a path from the start to goal poses. The search assumes a circular robot
