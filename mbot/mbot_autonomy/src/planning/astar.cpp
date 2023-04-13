@@ -25,35 +25,38 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     mbot_lcm_msgs::robot_path_t path;
     queue.push(startNode_pointer);
     bool not_first_time = 0;
+    int count = 0;
 
     while (!queue.empty()) {
         
         Node* currNode = queue.pop();
         if(!visited.is_member(currNode)){
+            count ++;
+            std::cout << "size of count: " << count << std::endl;
             visited.push(currNode);
         
             if(not_first_time)
-                std::cout<< "current node x: "<< currNode->cell.x << ", y:" << currNode->cell.y << "parent is x: " << currNode->parent->cell.x << ", y: " << currNode->parent->cell.y << std::endl;
+                //std::cout<< "current node x: "<< currNode->cell.x << ", y:" << currNode->cell.y << "parent is x: " << currNode->parent->cell.x << ", y: " << currNode->parent->cell.y << std::endl;
             not_first_time = 1;
             if(*currNode == goalNode) {
-                std::cout << "made it to goal" << std::endl;
+                //std::cout << "made it to goal" << std::endl;
                 std::vector<Node*>  node_path = extract_node_path(currNode, &startNode);
-                std::cout << "1" << std::endl;
+                //std::cout << "1" << std::endl;
                 std::vector<mbot_lcm_msgs::pose_xyt_t> pose_path = extract_pose_path(node_path, distances);
-                std::cout << "2" << std::endl;
+                //std::cout << "2" << std::endl;
                 path.path = pose_path;
-                std::cout << "3" << std::endl;
+                //std::cout << "3" << std::endl;
                 path.path_length = path.path.size();
-                std::cout << "4" << std::endl;
+                //std::cout << "4" << std::endl;
                 path.utime = start.utime;
-                std::cout << "5" << std::endl;
+                //std::cout << "5" << std::endl;
                 break;
             }
             std::vector<Node*> children = expand_node(currNode, distances, params);
             //std::cout << "number of children: " << children.size() << std::endl;
             for (int i = 0; i < children.size(); i++) {
                 if (visited.is_member(children[i]) == 0){
-                    std::cout << "child cell x: " << children[i]->cell.x << ", y: " << children[i]->cell.y << ", parent x: " <<children[i]->parent->cell.x << ", y: " << children[i]->parent->cell.y   << std::endl;
+                    //std::cout << "child cell x: " << children[i]->cell.x << ", y: " << children[i]->cell.y << ", parent x: " <<children[i]->parent->cell.x << ", y: " << children[i]->parent->cell.y   << std::endl;
                     children[i]->h_cost = h_cost(children[i], &goalNode, distances);
                     //std::cout << "calculate h" << std::endl;
                     children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
@@ -93,10 +96,10 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
         g_cost += 1.4;
         //std::cout << "3" << std::endl;
     }
-    //if(distances(from->cell.x, from->cell.y) < params.maxDistanceWithCost){
-    //    g_cost += pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
+    if(distances(from->cell.x, from->cell.y) < params.maxDistanceWithCost){
+        g_cost += pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
      //   std::cout << "2.3" << std::endl;
-    //}
+    }
     //std::cout << "4" << std::endl;
     return g_cost;
 }
@@ -110,11 +113,13 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
     const int yDeltas[8] = {0, 1, -1, -1,  1,  1, -1,  0};
     for (int i = 0; i < 8; i++) {
         if (distances.isCellInGrid(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i])){
-            if(distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) > params.minDistanceToObstacle){
+            if(distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) > params.minDistanceToObstacle + 0.01){
                 //Node child(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
+                if(distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) < 0.115)
+                    std::cout << "cell distance: " << distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) << ", param distance: " << params.minDistanceToObstacle << std::endl;
                 Node* child = new Node(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
                 child->parent = node;
-                std::cout << "child cell x: " << child->cell.x << ", y: " << child->cell.y << ", parent x: " <<child->parent->cell.x << ", y: " << child->parent->cell.y   << std::endl;
+                //std::cout << "child cell x: " << child->cell.x << ", y: " << child->cell.y << ", parent x: " <<child->parent->cell.x << ", y: " << child->parent->cell.y   << std::endl;
                 children.push_back(child);
             }
         }
