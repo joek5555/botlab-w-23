@@ -24,22 +24,32 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     mbot_lcm_msgs::robot_path_t path;
     queue.push(&startNode);
 
+    if (!distances.isCellInGrid(goalNode.cell.x, goalNode.cell.y)) {
+        return path;
+    }
+    if (distances(goalNode.cell.x, goalNode.cell.y) < params.minDistanceToObstacle) {
+        return path;
+    }
+
     while (!queue.empty()) {
-        Node currNode = *queue.pop();
-        if(currNode == goalNode) {
-            std::vector<Node*>  node_path = extract_node_path(&currNode, &startNode);
-            std::vector<mbot_lcm_msgs::pose_xyt_t> pose_path = extract_pose_path(node_path, distances);
-            path.path = pose_path;
-            path.path_length = path.path.size();
-            path.utime = start.utime;
-            break;
-        }
-        auto children = expand_node(&currNode, distances, params);
-        for (int i = 0; i < children.size(); i++) {
-            if (!visited.is_member(children[i])) {
-                children[i]->h_cost = h_cost(children[i], &goalNode, distances);
-                children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
-                queue.push(children[i]);
+        Node* currNode = queue.pop();
+        if(!visited.is_member(currNode)) {
+            visited.push(currNode);
+            if(*currNode == goalNode) {
+                std::vector<Node*>  node_path = extract_node_path(currNode, &startNode);
+                std::vector<mbot_lcm_msgs::pose_xyt_t> pose_path = extract_pose_path(node_path, distances);
+                path.path = pose_path;
+                path.path_length = path.path.size();
+                path.utime = start.utime;
+                break;
+            }
+            std::vector<Node*> children = expand_node(currNode, distances, params);
+            for (int i = 0; i < children.size(); i++) {
+                if (!visited.is_member(children[i])) {
+                    children[i]->h_cost = h_cost(children[i], &goalNode, distances);
+                    children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
+                    queue.push(children[i]);
+                }
             }
         }
     }
@@ -71,7 +81,6 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
     if(distances(from->cell.x, from->cell.y) < params.maxDistanceWithCost){
         g_cost += pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
     }
-       
     return g_cost;
 }
 
@@ -84,10 +93,9 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
     for (int i = 0; i < 8; i++) {
         if (distances.isCellInGrid(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i])){
             if(distances(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]) > params.minDistanceToObstacle){
-
-                Node child(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
-                child.parent = node;
-                children.push_back(&child);
+                Node* child = new Node(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
+                child->parent = node;
+                children.push_back(child);
             }
         }
     }
