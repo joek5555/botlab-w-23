@@ -15,12 +15,21 @@ void ObstacleDistanceGrid::initializeDistances(const OccupancyGrid& map)
     //////////// TODO: initialize the dstances for the obstacle distance grid 
     int width = map.widthInCells();
     int height = map.heightInCells();
+    bool at_least_one_obstacle = 0;
     for (int y = 0; y < height; y++) {
-        for (int x = 0; x < height; x++) {
+        for (int x = 0; x < width; x++) {
             if (map.logOdds(x, y) < 0) {
                 distance(x, y) = -1;
             } else {
                 distance(x, y) = 0;
+                at_least_one_obstacle = 1;
+            }
+        }
+    }
+    if(!at_least_one_obstacle) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                distance(x,y) = 1000;
             }
         }
     }

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 
 using namespace std::chrono;
 
@@ -35,13 +36,13 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
         }
         auto children = expand_node(&currNode, distances, params);
         for (int i = 0; i < children.size(); i++) {
-            if (visited.is_member(children[i]))
-            children[i]->h_cost = h_cost(children[i], &goalNode, distances);
-            children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
-            queue.push(children[i]);
+            if (!visited.is_member(children[i])) {
+                children[i]->h_cost = h_cost(children[i], &goalNode, distances);
+                children[i]->g_cost = g_cost(children[i], &goalNode, distances, params);
+                queue.push(children[i]);
+            }
         }
     }
-
     return path;
 }
 
@@ -86,6 +87,7 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
 
                 Node child(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
                 child.parent = node;
+                children.push_back(&child);
             }
         }
     }
