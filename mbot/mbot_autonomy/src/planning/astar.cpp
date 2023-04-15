@@ -133,7 +133,31 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
             path[i].theta = calculate_theta(path[i], path[i+1]);
         }
     }
+    int pattern_start_idx;
+    int pattern_end_idx;
+    float pattern_a;
+    float pattern_b;
+    float curr_pattern;
     for (int i = 1; i < path.size()-1; i++) {
+        if (fabs(path[i].theta - path[i-1].theta) < 0.8) {   //check if the difference in theta of two points is ~45 deg
+            pattern_start_idx = i-1;
+            pattern_a = path[i-1].theta;
+            pattern_b = path[i].theta;
+            curr_pattern = pattern_b;
+            int j = i;
+            while (j < path.size()-1 && (path[j].theta - curr_pattern) < 0.05) {
+                if (curr_pattern == pattern_a) {
+                    curr_pattern = pattern_b;
+                } else {
+                    curr_pattern = pattern_a;
+                }
+                j++;
+            }
+            pattern_end_idx = j-1;
+            if (pattern_end_idx - pattern_start_idx > 1) {
+                path.erase(path.begin() + pattern_start_idx + 1, path.begin() + pattern_end_idx -1);
+            }
+        }
         if (fabs(path[i].theta - path[i-1].theta) < 0.05) {
             path.erase(path.begin()+i);
             i--;
