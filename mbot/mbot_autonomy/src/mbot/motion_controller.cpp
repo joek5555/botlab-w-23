@@ -78,7 +78,7 @@ public:
 
     virtual bool target_reached(const mbot_lcm_msgs::pose_xyt_t& pose, const mbot_lcm_msgs::pose_xyt_t& target, bool is_end_pose)  override
     {
-        return ((fabs(pose.x - target.x) < 0.05) && (fabs(pose.y - target.y)  < 0.05));
+        return ((fabs(pose.x - target.x) < 0.075) && (fabs(pose.y - target.y)  < 0.075));
     }
 };
 

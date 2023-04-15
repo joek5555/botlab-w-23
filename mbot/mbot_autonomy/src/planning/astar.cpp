@@ -41,6 +41,16 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                 path.path = pose_path;
                 path.path_length = path.path.size();
                 path.utime = start.utime;
+                /*
+                while (!queue.empty()) {
+                    Node* node_to_delete = queue.pop();
+                    delete node_to_delete;
+                }
+                while (!visited.empty()) {
+                    Node* node_to_delete = visited.pop();
+                    delete node_to_delete;
+                }
+                */
                 break;
             }
             std::vector<Node*> children = expand_node(currNode, distances, params);
@@ -143,9 +153,9 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
             pattern_start_idx = i-1;
             pattern_a = path[i-1].theta;
             pattern_b = path[i].theta;
-            curr_pattern = pattern_b;
-            int j = i;
-            while (j < path.size()-1 && (path[j].theta - curr_pattern) < 0.05) {
+            curr_pattern = pattern_a;
+            int j = i+1;
+            while (j < path.size()-1 && fabs(path[j].theta - curr_pattern) < 0.05) {
                 if (curr_pattern == pattern_a) {
                     curr_pattern = pattern_b;
                 } else {
@@ -153,9 +163,10 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
                 }
                 j++;
             }
-            pattern_end_idx = j-1;
-            if (pattern_end_idx - pattern_start_idx > 1) {
-                path.erase(path.begin() + pattern_start_idx + 1, path.begin() + pattern_end_idx -1);
+            pattern_end_idx = j;
+            if (pattern_end_idx - pattern_start_idx > 2) {
+                path.erase(path.begin() + pattern_start_idx + 1, path.begin() + pattern_end_idx-1);
+                i--;
             }
         }
         if (fabs(path[i].theta - path[i-1].theta) < 0.05) {
