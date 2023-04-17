@@ -38,6 +38,21 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
 void ParticleFilter::initializeFilterRandomly(const OccupancyGrid& map)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> uniform_x(-map.widthInMeters()/2, map.widthInMeters()/2);
+    std::uniform_real_distribution<float> uniform_y(-map.heightInMeters()/2, map.heightInMeters()/2);
+    std::uniform_real_distribution<float> uniform_theta(-M_PI/2, M_PI/2);
+    for (auto& particle : posterior_) {
+        
+        particle.pose.x = uniform_x(generator);
+        particle.pose.y = uniform_y(generator);
+        particle.pose.theta = uniform_theta(generator);
+        //particle.pose.utime = map.utime;
+        particle.weight = 1.0 / kNumParticles_;
+        std::cout << "x: " << particle.pose.x << ", y: " << particle.pose.y << ", theta: " << particle.pose.theta << std::endl;
+        
+    }
+    percent_of_top_particles = 0.75;
 }
 
 void ParticleFilter::resetOdometry(const mbot_lcm_msgs::pose_xyt_t& odometry)
@@ -165,29 +180,31 @@ ParticleList ParticleFilter::resamplePosteriorDistribution() // originally input
     }
     
     
-    std::sort (prior.begin(), prior.end(), sortBtWeight);
+    if(percent_of_top_particles != 2.0){
+        std::sort (prior.begin(), prior.end(), sortBtWeight);
 
-    int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
-    
-    ParticleList prior_top_particles = {prior.begin(), prior.begin() + num_top_particles};
-    
-    mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = computeParticlesAverage(prior_top_particles);
+        int num_top_particles = int(kNumParticles_ * percent_of_top_particles);
+        
+        ParticleList prior_top_particles = {prior.begin(), prior.begin() + num_top_particles};
+        
+        mbot_lcm_msgs::pose_xyt_t average_pose_top_particles = computeParticlesAverage(prior_top_particles);
 
-    std::random_device rd;
-    std::mt19937 generator = std::mt19937(rd());
-    std::normal_distribution<> dist_xy(0.0, covariance_of_sampled_particles_xy);
-    std::normal_distribution<> dist_theta(0.0, covariance_of_sampled_particles_theta);
-    //dist(generator)
+        std::random_device rd;
+        std::mt19937 generator = std::mt19937(rd());
+        std::normal_distribution<> dist_xy(0.0, covariance_of_sampled_particles_xy);
+        std::normal_distribution<> dist_theta(0.0, covariance_of_sampled_particles_theta);
+        //dist(generator)
 
-    
-    for(int i = num_top_particles; i < prior.size(); i++){
-        prior[i].pose.x = average_pose_top_particles.x + dist_xy(generator);
-        prior[i].pose.y = average_pose_top_particles.y + dist_xy(generator);
-        prior[i].pose.theta = wrap_to_pi(average_pose_top_particles.theta + dist_theta(generator));
-    }
-    
-    for(int i = 0 ; i < prior.size(); i++){
-        prior[i].weight = inverse_num_particles;
+        
+        for(int i = num_top_particles; i < prior.size(); i++){
+            prior[i].pose.x = average_pose_top_particles.x + dist_xy(generator);
+            prior[i].pose.y = average_pose_top_particles.y + dist_xy(generator);
+            prior[i].pose.theta = wrap_to_pi(average_pose_top_particles.theta + dist_theta(generator));
+        }
+        
+        for(int i = 0 ; i < prior.size(); i++){
+            prior[i].weight = inverse_num_particles;
+        }
     }
     
     //std::cout << average_pose_top_particles.x << ", " << average_pose_top_particles.y << ", " << average_pose_top_particles.theta << 

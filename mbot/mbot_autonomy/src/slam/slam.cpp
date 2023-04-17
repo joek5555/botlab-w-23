@@ -52,6 +52,7 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
             haveMap_ = map_.loadFromFile(mapFile_);
             assert(haveMap_);   // if there's no map, then the localization can't run!
             mode_ = localization_only;
+            randomInitialPos_ = 1;
         }
         // Check mode
         if (actionOnlyMode) mode_ = action_only;
