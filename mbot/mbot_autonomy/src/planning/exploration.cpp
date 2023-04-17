@@ -19,13 +19,20 @@ const float kReachedPositionThreshold = 0.05f;  // must get within this distance
 // Define an equality operator for poses to allow direct comparison of two paths
 bool are_equal(const mbot_lcm_msgs::pose_xyt_t& lhs, const mbot_lcm_msgs::pose_xyt_t& rhs)
 {
+    //std::cout << "lhs x: " << lhs.x << ", rhs x: " << rhs.x << std::endl;
+    //std::cout << "lhs y: " << lhs.y << ", rhs y: " << rhs.y << std::endl;
+    //std::cout << "lhs theta: " << lhs.theta << ", rhs theta: " << rhs.theta << std::endl;
     return (lhs.x == rhs.x) && (lhs.y == rhs.y) && (lhs.theta == rhs.theta);
 }
 using pose_t = mbot_lcm_msgs::pose_xyt_t;
 using pose_vec_t = std::vector<pose_t>;
 bool are_equal(const pose_vec_t& lhs, const pose_vec_t& rhs)
 {
-    if(lhs.size() != rhs.size()) return false;
+    //std::cout << "checking if paths are equal" << std::endl;
+    if(lhs.size() != rhs.size()){
+        std::cout << "lhs size: " << lhs.size() << ", rhs size: " << rhs.size() << std::endl;
+        return false;
+    } 
     for (const auto& l: lhs)
         for (const auto& r: rhs)
             if (!are_equal(l, r)) return false;
@@ -163,6 +170,7 @@ void Exploration::executeStateMachine(void)
     
     // Save the path from the previous iteration to determine if a new path was created and needs to be published
     mbot_lcm_msgs::robot_path_t previousPath = currentPath_;
+
     
     // Run the state machine until the state remains the same after an iteration of the loop
     do
@@ -205,12 +213,17 @@ void Exploration::executeStateMachine(void)
         //     std::cout << "(" << pose.x << "," << pose.y << "," << pose.theta << "); ";
         // }std::cout << "\n";
 
-        if (currentPath_.path_length > 0)
+        if (currentPath_.path_length > 0){
+            std::cout << "publishing path 1 starting with x: " << currentPath_.path[0].x 
+                << ", y: " << currentPath_.path[0].y 
+                << ", theta: " << currentPath_.path[0].theta << std::endl;
             lcmInstance_->publish(CONTROLLER_PATH_CHANNEL, &currentPath_);
+        }
     }
-
+    std::cout << "current path updated: " << current_path_updated_ << std::endl;
     //if path changed, send current path
-    if(!are_equal(previousPath.path, currentPath_.path))
+    //if(!are_equal(previousPath.path, currentPath_.path))
+    if(current_path_updated_)
     { 
 
         // std::cout << "INFO: Exploration: A new path was created on this iteration. Sending to Mbot:\n";
@@ -221,8 +234,12 @@ void Exploration::executeStateMachine(void)
         //     std::cout << "(" << pose.x << "," << pose.y << "," << pose.theta << "); ";
         // }std::cout << "\n";
 
-        if (currentPath_.path_length > 0)
+        if (currentPath_.path_length > 0){
+            std::cout << "publishing path 2 starting with x: " << currentPath_.path[0].x 
+                << ", y: " << currentPath_.path[0].y 
+                << ", theta: " << currentPath_.path[0].theta << std::endl;
             lcmInstance_->publish(CONTROLLER_PATH_CHANNEL, &currentPath_);
+        }
 
         pathReceived_ = false;
         most_recent_path_time = currentPath_.utime;
@@ -267,7 +284,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
     */
 
     
-
+    current_path_updated_ = 0;
     if(currentPath_.path.size() > 0){
         mbot_lcm_msgs::pose_xyt_t current_goal = currentPath_.path.back();
         if(!planner_.isValidGoal(current_goal) || sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.1){
@@ -277,6 +294,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
             frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
             currentPath_ = front_processing.path_selected;
             num_unreachable_frontiers_ = front_processing.num_unreachable_frontiers;
+            current_path_updated_ = 1;
         }
     }
     else{
@@ -285,6 +303,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
         frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
         currentPath_ = front_processing.path_selected;
         num_unreachable_frontiers_ = front_processing.num_unreachable_frontiers;
+        current_path_updated_ = 1;
     }
     
     
@@ -350,10 +369,12 @@ int8_t Exploration::executeReturningHome(bool initialize)
     
     printf("Returning home\n");
 
+    current_path_updated_ = 0;
     if(!set_home_path_){
         std::cout << "Going home first time" << std::endl;
         planner_.planPath(currentPose_, homePose_);
         set_home_path_ = 1;
+        current_path_updated_ = 1;
     }
 
     /////////////////////////////// End student code ///////////////////////////////
