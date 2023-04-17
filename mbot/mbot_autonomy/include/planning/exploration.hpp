@@ -127,7 +127,8 @@ private:
     int8_t executeFailed(bool initialize);
     
     /////////// TODO: Add any additional methods you might need here //////////////
-    
+    bool set_home_path_ = 0;
+    int num_unreachable_frontiers_ = 0;
     /////////////////////////// End student code ///////////////////////////////
 };
 

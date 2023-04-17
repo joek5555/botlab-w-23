@@ -22,6 +22,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     PriorityQueue queue;
     PriorityQueue visited;
     mbot_lcm_msgs::robot_path_t path;
+    path.path_length = 1;
     queue.push(&startNode);
 
     if (!distances.isCellInGrid(goalNode.cell.x, goalNode.cell.y)) {
@@ -89,7 +90,7 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
         g_cost += 1.4;
     }
     if(distances(from->cell.x, from->cell.y) < params.maxDistanceWithCost){
-        g_cost += pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
+        g_cost += pow((params.maxDistanceWithCost - distances(from->cell.x, from->cell.y))*distances.cellsPerMeter(), params.distanceCostExponent);
     }
     return g_cost;
 }
@@ -169,6 +170,8 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
                 i--;
             }
         }
+    }
+    for (int i = 1; i < path.size()-1; i++){
         if (fabs(path[i].theta - path[i-1].theta) < 0.05) {
             path.erase(path.begin()+i);
             i--;

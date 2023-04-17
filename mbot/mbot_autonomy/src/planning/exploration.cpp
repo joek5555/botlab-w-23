@@ -242,6 +242,8 @@ int8_t Exploration::executeInitializing(void)
     status.status = mbot_lcm_msgs::exploration_status_t::STATUS_COMPLETE;
     
     lcmInstance_->publish(EXPLORATION_STATUS_CHANNEL, &status);
+
+    std::cout << "Done initializing" << std::endl;
     
     return mbot_lcm_msgs::exploration_status_t::STATE_EXPLORING_MAP;
 }
@@ -263,8 +265,28 @@ int8_t Exploration::executeExploringMap(bool initialize)
     *           explored more of the map.
     *       -- You will likely be able to see the frontier before actually reaching the end of the path leading to it.
     */
-    frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
-    frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+
+    
+
+    if(currentPath_.path.size() > 0){
+        mbot_lcm_msgs::pose_xyt_t current_goal = currentPath_.path.back();
+        if(!planner_.isValidGoal(current_goal) || sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.1){
+
+            std::cout << "invalid goal or reached point" << std::endl;
+            frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+            frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+            currentPath_ = front_processing.path_selected;
+            num_unreachable_frontiers_ = front_processing.num_unreachable_frontiers;
+        }
+    }
+    else{
+        std::cout << "no path" << std::endl;
+        frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+        frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+        currentPath_ = front_processing.path_selected;
+        num_unreachable_frontiers_ = front_processing.num_unreachable_frontiers;
+    }
+    
     
     /////////////////////////////// End student code ///////////////////////////////
     
@@ -274,9 +296,9 @@ int8_t Exploration::executeExploringMap(bool initialize)
     status.team_number = teamNumber_;
     status.state = mbot_lcm_msgs::exploration_status_t::STATE_EXPLORING_MAP;
     
-    printf("Num unreachable frontiers: %d\n", front_processing.num_unreachable_frontiers);
+    printf("Num unreachable frontiers: %d\n", num_unreachable_frontiers_);
     // If no reachable frontiers remain, then exploration is complete
-    if(frontiers_.size() - front_processing.num_unreachable_frontiers == 0)
+    if(frontiers_.size() - num_unreachable_frontiers_ == 0)
     {
         status.status = mbot_lcm_msgs::exploration_status_t::STATUS_COMPLETE;
     }
@@ -327,6 +349,12 @@ int8_t Exploration::executeReturningHome(bool initialize)
     */
     
     printf("Returning home\n");
+
+    if(!set_home_path_){
+        std::cout << "Going home first time" << std::endl;
+        planner_.planPath(currentPose_, homePose_);
+        set_home_path_ = 1;
+    }
 
     /////////////////////////////// End student code ///////////////////////////////
     

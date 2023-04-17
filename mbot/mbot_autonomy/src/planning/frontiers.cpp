@@ -122,14 +122,53 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     // First, choose the frontier to go to
     // Initial alg: find the nearest one
+    std::cout << "Number of frontiers: " << frontiers.size() << std::endl;
+    std::cout << "about to reset frontiers" << std::endl;
+    std::vector<frontier_t> frontiers_vector = frontiers;
+
+    Point<double> frontier_point_to_travel;
+    double min_distance_squared_to_frontier = 1000;
+    int unreachable_frontiers = 0;
+    mbot_lcm_msgs::robot_path_t path;
+    while(1){
+        int frontier_index = 0;
+        for(int i=0; i < frontiers_vector.size(); i ++){
+            Point<double> frontier_center =  find_frontier_centroid(frontiers_vector[i]);
+            double distance_squared_to_frountier = pow(robotPose.x - frontier_center.x, 2) + pow(robotPose.y - frontier_center.y, 2);
+            if (distance_squared_to_frountier < min_distance_squared_to_frontier) {
+                frontier_point_to_travel = frontier_center;
+                frontier_index = i;
+            }
+        }
+        mbot_lcm_msgs::pose_xyt_t goal_pose;
+        goal_pose.x = frontier_point_to_travel.x;
+        goal_pose.y = frontier_point_to_travel.y;
+        goal_pose.theta = 0.0;
+        goal_pose.utime = robotPose.utime;
+        path = planner.planPath(robotPose, goal_pose);
+        std::cout << "calculated_path length: " << path.path_length << std::endl;
+        // if path was valid, break out of while loop
+        if(path.path_length > 1){
+            break;
+        }
+        // if not valid path
+        else{
+            unreachable_frontiers ++;
+            frontiers_vector.erase(frontiers_vector.begin()+frontier_index);
+            if(frontiers_vector.size() < 1){
+                std::cout << "INFO: all frontiers are not valid goals\n";
+                break;
+            } 
+        }
+    }
 
     // Returnable path
-    mbot_lcm_msgs::robot_path_t path;
-    path.utime = utime_now();
-    path.path_length = 1;
-    path.path.push_back(robotPose);
-    int unreachable_frontiers = 0;
-
+    //mbot_lcm_msgs::robot_path_t path;
+    //path.utime = utime_now();
+    //path.path_length = 1;
+    //path.path.push_back(robotPose);
+    //int unreachable_frontiers = 0;
+    
     
     return frontier_processing_t(path, unreachable_frontiers);
 }

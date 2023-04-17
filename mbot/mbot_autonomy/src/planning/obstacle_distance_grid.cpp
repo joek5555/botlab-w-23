@@ -53,6 +53,16 @@ void ObstacleDistanceGrid::setDistances(const OccupancyGrid& map)
         searchQueue.pop();
         expand_node(nextNode, *this, searchQueue);
     }
+    int height = map.heightInCells();
+    int width = map.widthInCells();
+    cell_t cell;
+    for (cell.y = 0; cell.y < height; cell.y++) {
+        for (cell.x = 0; cell.x < width; cell.x++) {
+            if (map.logOdds(cell.x, cell.y) == 0) {
+                distance(cell.x, cell.y) = 0.201;
+            }
+        }
+    }
 }
 
 
