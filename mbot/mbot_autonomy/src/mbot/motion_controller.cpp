@@ -44,7 +44,7 @@ private:
     float fwd_pid[3] = {0.8, 0, 0};
     float fwd_sum_error = 0;
     float fwd_last_error = 0;
-    float turn_pid[3] = {3.0, 0.1, 0.0};
+    float turn_pid[3] = {3.0, 0.2, 1.0};
     float turn_sum_error = 0;
     float turn_last_error = 0;
 public:
@@ -131,6 +131,9 @@ public:
         float dy = target.y - pose.y;
         float target_heading = atan2(dy, dx);
         // Handle the case when the target is on the same x,y but on a different theta
+        if ((fabs(angle_diff(pose.theta, target_heading)) < 0.05)) {
+            std::cout << "reached target heading" << target_heading << std::endl;
+        }
         return (fabs(angle_diff(pose.theta, target_heading)) < 0.05);
     }
     bool target_reached_final_turn(const mbot_lcm_msgs::pose_xyt_t& pose, const mbot_lcm_msgs::pose_xyt_t& target)
@@ -138,6 +141,9 @@ public:
         float dx = target.x - pose.x;
         float dy = target.y - pose.y;
         float target_heading = atan2(dy, dx);
+        if (fabs(angle_diff(target.theta, pose.theta)) < 0.05) {
+            std::cout << "reached target theta: " << target.theta << std::endl;
+        }
         // Handle the case when the target is on the same x,y but on a different theta
         return (fabs(angle_diff(target.theta, pose.theta)) < 0.05);
     }
