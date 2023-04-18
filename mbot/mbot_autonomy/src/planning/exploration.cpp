@@ -287,7 +287,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
     current_path_updated_ = 0;
     if(currentPath_.path.size() > 0){
         mbot_lcm_msgs::pose_xyt_t current_goal = currentPath_.path.back();
-        if(!planner_.isValidGoal(current_goal) || sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.1){
+        if(!planner_.isValidGoal(current_goal) || sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.2){
 
             std::cout << "invalid goal or reached point" << std::endl;
             frontiers_ = find_map_frontiers(currentMap_, currentPose_);
@@ -372,7 +372,8 @@ int8_t Exploration::executeReturningHome(bool initialize)
     current_path_updated_ = 0;
     if(!set_home_path_){
         std::cout << "Going home first time" << std::endl;
-        planner_.planPath(currentPose_, homePose_);
+        currentPath_ = planner_.planPath(currentPose_, homePose_);
+        currentPath_.path.back().theta = 0.0;
         set_home_path_ = 1;
         current_path_updated_ = 1;
     }
