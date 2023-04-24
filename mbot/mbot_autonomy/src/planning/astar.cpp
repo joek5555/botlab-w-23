@@ -137,6 +137,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
         pose.y = point.y;
         path.push_back(pose);
     }
+    //calculate thetas for poses
     for (int i = 0; i < path.size(); i++) {
         if (i == path.size() - 1) {
             path[i].theta = path[i-1].theta;
@@ -149,6 +150,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
     float pattern_a;
     float pattern_b;
     float curr_pattern;
+    //checks for a diagonal pattern
     for (int i = 1; i < path.size()-1; i++) {
         if (fabs(path[i].theta - path[i-1].theta) < 0.8) {   //check if the difference in theta of two points is ~45 deg
             pattern_start_idx = i-1;
@@ -171,10 +173,19 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
             }
         }
     }
+    // checks if thetas are the same
     for (int i = 1; i < path.size()-1; i++){
         if (fabs(path[i].theta - path[i-1].theta) < 0.05) {
             path.erase(path.begin()+i);
             i--;
+        }
+    }
+    //recalculate thetas
+    for (int i = 0; i < path.size(); i++) {
+        if (i == path.size() - 1) {
+            path[i].theta = path[i-1].theta;
+        } else {
+            path[i].theta = calculate_theta(path[i], path[i+1]);
         }
     }
     return path;
