@@ -287,9 +287,17 @@ int8_t Exploration::executeExploringMap(bool initialize)
     current_path_updated_ = 0;
     if(currentPath_.path.size() > 0){
         mbot_lcm_msgs::pose_xyt_t current_goal = currentPath_.path.back();
-        if(!planner_.isValidGoal(current_goal) || sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.2){
+        if(!planner_.isValidGoal(current_goal)){
 
-            std::cout << "invalid goal or reached point" << std::endl;
+            std::cout << "invalid goal" << std::endl;
+            frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+            frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+            currentPath_ = front_processing.path_selected;
+            num_unreachable_frontiers_ = front_processing.num_unreachable_frontiers;
+            current_path_updated_ = 1;
+        }
+        else if(sqrt(pow(currentPose_.x - current_goal.x, 2) + pow(currentPose_.y - current_goal.y, 2)) < 0.075){
+            std::cout << "reached point" << std::endl;
             frontiers_ = find_map_frontiers(currentMap_, currentPose_);
             frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
             currentPath_ = front_processing.path_selected;

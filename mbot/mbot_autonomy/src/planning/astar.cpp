@@ -139,8 +139,8 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
     }
     for (int i = 0; i < path.size(); i++) {
         if (i == path.size() - 1) {
-            path[i].theta = 0;
-            //path[i].theta = path[i-1].theta;
+            //path[i].theta = 0;
+            path[i].theta = path[i-1].theta;
         } else {
             path[i].theta = calculate_theta(path[i], path[i+1]);
         }
@@ -180,8 +180,8 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
     }
     for (int i = 0; i < path.size(); i++) {
         if (i == path.size() - 1) {
-            path[i].theta = 0;
-            //path[i].theta = path[i-1].theta;
+            //path[i].theta = 0;
+            path[i].theta = path[i-1].theta;
         } else {
             path[i].theta = calculate_theta(path[i], path[i+1]);
         }

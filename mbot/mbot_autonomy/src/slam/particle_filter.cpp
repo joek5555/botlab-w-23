@@ -5,6 +5,7 @@
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <cassert>
 #include <common_utils/geometric/angle_functions.hpp>
+//#include <chrono>
 
 bool sortBtWeight (mbot_lcm_msgs::particle_t i, mbot_lcm_msgs::particle_t j) { return (i.weight>j.weight); }
 
@@ -53,12 +54,18 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
     if(hasRobotMoved){
+       // std::chrono::high_resolution_clock::time_point t0 = 
+        //    std::chrono::high_resolution_clock::now();
         auto prior = resamplePosteriorDistribution(); // originally passed &map to function
         auto proposal = computeProposalDistribution(prior);
         posterior_ = computeNormalizedPosterior(proposal, laser, map);
         // OPTIONAL TODO: Add reinvigoration step
         posteriorPose_ = estimatePosteriorPose(posterior_);
         posteriorPose_.utime = odometry.utime;
+        //std::chrono::high_resolution_clock::time_point t1 = 
+        //    std::chrono::high_resolution_clock::now();
+        //std::chrono::duration<double,std::milli> dt = t1-t0;
+        //std::cout << "particle filter update time ms: " << dt.count() << std::endl;
     }
     
 

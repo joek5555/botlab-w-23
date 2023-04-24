@@ -78,7 +78,7 @@ public:
 
     virtual bool target_reached(const mbot_lcm_msgs::pose_xyt_t& pose, const mbot_lcm_msgs::pose_xyt_t& target, bool is_end_pose)  override
     {
-        return ((fabs(pose.x - target.x) < 0.075) && (fabs(pose.y - target.y)  < 0.075));
+        return ((fabs(pose.x - target.x) < 0.05) && (fabs(pose.y - target.y)  < 0.05));
     }
 };
 
@@ -362,7 +362,8 @@ private:
     bool assignNextTarget(void)
     {
         if(!targets_.empty()) { targets_.pop_back(); }
-        state_ = INITIAL_TURN;
+        //state_ = INITIAL_TURN;
+        state_ = SMART;
         return !targets_.empty();
     }
     
@@ -423,7 +424,7 @@ int main(int argc, char** argv)
 
             // Angular vel
             //float max_ang_vel = M_PI/4;
-            float max_ang_vel = M_PI/8;
+            float max_ang_vel = M_PI/4;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 
